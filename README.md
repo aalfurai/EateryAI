@@ -1,2 +1,2 @@
-# EatryAI
+# EateryAI
 180A project
