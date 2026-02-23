@@ -122,3 +122,14 @@ CREATE INDEX menu_item_macronutrients_item_id_idx
     ON eateryai_test1.menu_item_macronutrients (item_id);
 
 
+-- Fix Cuisines
+ALTER TABLE eateryai_test1.menu_item_cuisines 
+ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY;
+
+-- Fix Macronutrients
+ALTER TABLE eateryai_test1.menu_item_macronutrients 
+ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY;
+
+-- Fix Allergens
+ALTER TABLE eateryai_test1.menu_item_allergens 
+ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY;

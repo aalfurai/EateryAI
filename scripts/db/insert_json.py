@@ -1,5 +1,6 @@
 import json
 import uuid
+import time
 from db import get_db_connection
 
 def insert_meals_from_json(file_path):
@@ -7,6 +8,9 @@ def insert_meals_from_json(file_path):
     if not conn: 
         return
     cur = conn.cursor()
+    start_time = time.time()
+    last_print_time = start_time
+    entries_added = 0
 
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -16,6 +20,11 @@ def insert_meals_from_json(file_path):
         for item in items:
             # upserting restaurant
             # link restaurant_id to the menu_item
+            current_time = time.time()
+            if current_time - last_print_time >= 5:
+                print(f"Progress: {entries_added} entries added...")
+                last_print_time = current_time
+    
             cur.execute("""
                 INSERT INTO restaurants (restaurant_id, restaurant_name, menu_card_image)
                 VALUES (%s, %s, %s)
@@ -59,12 +68,15 @@ def insert_meals_from_json(file_path):
                     VALUES (%s, %s);
                 """, (cuisine, item['item_id']))
 
+            entries_added += 1
+
         conn.commit()
-        print("Data added to all tables")
+        total_time = round(time.time() - start_time, 2)
+        print(f"Data added to all tables in {total_time} sec.")
 
     except Exception as e:
         conn.rollback()
-        print(f"Rollback.\nError: {e}")
+        print(f"Rollback.\nError:\n\t{e}")
     finally:
         cur.close()
         conn.close()
