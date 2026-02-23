@@ -1,6 +1,7 @@
 -- =========================
 -- Schema
 -- =========================
+DROP SCHEMA IF EXISTS eateryai_test1 CASCADE;
 CREATE SCHEMA IF NOT EXISTS eateryai_test1;
 COMMENT ON SCHEMA eateryai_test1 IS 'first test schema for EateryAI data';
 
@@ -9,7 +10,7 @@ COMMENT ON SCHEMA eateryai_test1 IS 'first test schema for EateryAI data';
 -- =========================
 CREATE TABLE eateryai_test1.restaurants (
     restaurant_id uuid PRIMARY KEY,
-    restaurant_name text NOT NULL,
+    restaurant_name text NOT NULL UNIQUE,
     menu_card_image text
 );
 
@@ -18,7 +19,7 @@ CREATE TABLE eateryai_test1.restaurants (
 -- =========================
 CREATE TABLE eateryai_test1.menu_items (
     item_id text PRIMARY KEY,
-    menu_item_id uuid UNIQUE NOT NULL,
+    menu_item_id text UNIQUE NOT NULL,
     restaurant_id uuid NOT NULL,
     menu_item_name text NOT NULL,
     category text NOT NULL,
@@ -119,3 +120,5 @@ CREATE INDEX menu_item_cuisines_item_id_idx
 
 CREATE INDEX menu_item_macronutrients_item_id_idx
     ON eateryai_test1.menu_item_macronutrients (item_id);
+
+
