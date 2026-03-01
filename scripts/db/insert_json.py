@@ -3,6 +3,15 @@ import uuid
 import time
 from db import get_db_connection
 
+def to_numeric(value, default=None):
+    if value == '' or value is None:
+        return default
+    try:
+        cleaned = str(value).replace('$', '').strip()
+        return float(cleaned)
+    except (ValueError, TypeError):
+        return default
+
 def insert_meals_from_json(file_path):
     conn = get_db_connection()
     if not conn: 
@@ -18,13 +27,14 @@ def insert_meals_from_json(file_path):
             if isinstance(items, dict): items = [items]
 
         for item in items:
-            # upserting restaurant
-            # link restaurant_id to the menu_item
             current_time = time.time()
             if current_time - last_print_time >= 5:
                 print(f"Progress: {entries_added} entries added...")
                 last_print_time = current_time
-    
+
+            if to_numeric(item['price']) is None:
+                continue
+
             cur.execute("""
                 INSERT INTO restaurants (restaurant_id, restaurant_name, menu_card_image)
                 VALUES (%s, %s, %s)
@@ -33,7 +43,6 @@ def insert_meals_from_json(file_path):
             """, (str(uuid.uuid4()), item['restaurant_name'], item['menu_card_image']))
             res_id = cur.fetchone()[0]
 
-            # insert menu item
             cur.execute("""
                 INSERT INTO menu_items (item_id, menu_item_id, restaurant_id, menu_item_name, category, price, golden_ratio, ai_description)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
@@ -44,24 +53,30 @@ def insert_meals_from_json(file_path):
                 res_id,
                 item['menu_item_name'],
                 item['category'],
-                item['price'],
-                item['golden_ratio'],
+                to_numeric(item['price']),
+                to_numeric(item['golden_ratio']),
                 item['ai_description']
             ))
 
-            # insert nutrition
             ni = item['nutrition_info']
             cur.execute("""
                 INSERT INTO nutrition_info (item_id, serving_size, calories, cholesterol, sodium, total_carbohydrates, dietary_fiber, sugars, protein, potassium, total_fat)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (item_id) DO NOTHING;
             """, (
-                item['item_id'], ni['serving_size'], ni['calories'], ni['cholesterol'],
-                ni['sodium'], ni['total_carbohydrates'], ni['dietary_fiber'],
-                ni['sugars'], ni['protein'], ni['potassium'], ni['total_fat']
+                item['item_id'],
+                ni['serving_size'],
+                to_numeric(ni['calories']),
+                to_numeric(ni['cholesterol']),
+                to_numeric(ni['sodium']),
+                to_numeric(ni['total_carbohydrates']),
+                to_numeric(ni['dietary_fiber']),
+                to_numeric(ni['sugars']),
+                to_numeric(ni['protein']),
+                to_numeric(ni['potassium']),
+                to_numeric(ni['total_fat'])
             ))
 
-            # insert cuisines
             for cuisine in item.get('cuisine_type', []):
                 cur.execute("""
                     INSERT INTO menu_item_cuisines (cuisine_type, item_id)
