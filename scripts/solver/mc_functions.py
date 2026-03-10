@@ -1,24 +1,50 @@
-def get_entree_combos(seed_id, df_entree_combos, is_entree):
+import itertools
+import copy
+
+def score_and_rank_meals(results: list, menu: dict) -> list:
+    scored = []
+    diverse = set()
+    for meal in results:
+        # quick fix to diversify results
+        if frozenset((meal['item_ids'][0], meal['item_ids'][1])) in diverse or frozenset((meal['item_ids'][0], meal['item_ids'][2])) in diverse:
+            continue
+        diverse.add(frozenset((meal['item_ids'][0], meal['item_ids'][1])))
+        diverse.add(frozenset((meal['item_ids'][0], meal['item_ids'][2])))
+
+        protein_deficit = max(0, USER_PROTEIN - meal['total_protein']) / USER_PROTEIN
+        cal_excess = max(0, meal['total_cal']   - USER_CAL)   / USER_CAL
+        price_excess = max(0, meal['total_price'] - USER_PRICE) / USER_PRICE
+        cheap_bonus = max(0, USER_PRICE - meal['total_price']) / USER_PRICE
+        golden_ratio = (meal['total_protein'] * 10) / max(meal['total_cal'], 1)
+        score = (
+            W_PROTEIN * protein_deficit +
+            W_CAL * cal_excess +
+            W_PRICE * price_excess -
+            W_PRICE * cheap_bonus -
+            W_PROTEIN * golden_ratio
+        )
+        scored.append({**meal, 'score': score, 'golden_ratio': golden_ratio})
+    return sorted(scored, key=lambda m: m['score'])
+
+def get_entree_combos(seed_id, entree_combos, is_entree):
     if is_entree:
-        mask = df_entree_combos['entree_ids'].apply(lambda ids: seed_id in ids)
-        return df_entree_combos[mask]
-    else:
-        return df_entree_combos
+        return [combo for combo in entree_combos if seed_id in combo['entree_ids']]
+    return entree_combos
 
 def get_cand_items(seed_id, category, 
-                   df_entree_combos=None, df_sides=None, df_drinks=None, df_desserts=None, df_addons=None, 
+                   entree_combos=None, sides=None, drinks=None, desserts=None, addons=None, 
                    is_entree=False):
     
     if category == 'Entree':
-        return get_entree_combos(seed_id, df_entree_combos, is_entree)
+        return get_entree_combos(seed_id, entree_combos, is_entree)
     elif category == 'Side':
-        return df_sides
+        return sides
     elif category == 'Drink':
-        return df_drinks
+        return drinks
     elif category == "Dessert":
-        return df_desserts
+        return desserts
     elif category == "Add-on":
-        return df_addons
+        return addons
 
 def intermediate_prune(meals, k=50):
     scores = []
@@ -36,16 +62,14 @@ def intermediate_prune(meals, k=50):
         score = W_PRICE * price_efficiency + W_CAL * cal_dev + W_PROTEIN * (protein_score - golden_ratio)
         scores.append(score)
     
-    scores = np.array(scores)
-    sorted_indices = scores.argsort()
-    top_k_indices = sorted_indices[:k]
+    top_k_indices = sorted(range(len(scores)), key=lambda i: scores[i])[:k]
     return [meals[i] for i in top_k_indices]
     
-def build_meal(seed_id, required_categories, df_restaurant, 
-               df_entree_combos=None, df_sides=None, df_drinks=None, df_desserts=None, df_addons=None,
+def build_meal(seed_id, required_categories, restaurant, 
+               entree_combos=None, sides=None, drinks=None, desserts=None, addons=None,
                build_full=True):
     
-    seed_item = df_restaurant.loc[seed_id].to_dict()
+    seed_item = restaurant[seed_id]
 
     current_meals = []
 
@@ -53,8 +77,8 @@ def build_meal(seed_id, required_categories, df_restaurant,
 
      # if the item is an entree, get all entree combos
     if is_entree and build_full:
-        candidate_entrees = get_entree_combos(seed_id=seed_id, df_entree_combos=df_entree_combos, is_entree=is_entree)
-        for _, combo in candidate_entrees.iterrows():
+        candidate_entrees = get_entree_combos(seed_id=seed_id, entree_combos=entree_combos, is_entree=is_entree)
+        for combo in candidate_entrees:
             meal_state = {
                 'item_ids': list(combo['entree_ids']),
                 'total_price': combo['price'],
@@ -80,19 +104,20 @@ def build_meal(seed_id, required_categories, df_restaurant,
         
         for meal in current_meals:
             cand_items = get_cand_items(seed_id=seed_id, category=category, 
-                                        df_entree_combos=df_entree_combos, 
-                                        df_sides=df_sides, 
-                                        df_drinks=df_drinks,
-                                        df_desserts=df_desserts,
-                                        df_addons=df_addons,
+                                        entree_combos=entree_combos, 
+                                        sides=sides, 
+                                        drinks=drinks,
+                                        desserts=desserts,
+                                        addons=addons,
                                         is_entree=is_entree)
 
-            cand_items = cand_items[
-                (meal['total_price'] + cand_items['price'] <= USER_PRICE + PRICE_TOL) &
-                (meal['total_cal'] + cand_items['calories'] <= USER_CAL + CAL_TOL)
+            cand_items = [
+                item for item in cand_items
+                if meal['total_price'] + item['price'] <= USER_PRICE + PRICE_TOL
+                and meal['total_cal']  + item['calories'] <= USER_CAL + CAL_TOL
             ]
 
-            for _, item in cand_items.iterrows():
+            for item in cand_items:
                 new_meal = copy.deepcopy(meal)
                 
                 if category == 'Entree':
@@ -111,3 +136,38 @@ def build_meal(seed_id, required_categories, df_restaurant,
         current_meals = intermediate_prune(new_meals)
     
     return current_meals
+
+# some functions for visualization
+def get_item_name(restaurant, id):
+    return restaurant[id]['menu_item_name']
+
+def get_item_price(restaurant, id):
+    return restaurant[id]['price']
+
+def get_item_calories(restaurant, id):
+    return restaurant[id]['calories']
+
+def get_item_protein(restaurant, id):
+    return restaurant[id]['protein']
+
+def display_meal(restaurant, meal):
+    print(f"Items in this meal:")
+    for id in meal['item_ids']:
+        print(f"\t{get_item_name(restaurant, id)}, ${get_item_price(restaurant, id):.2f}, {get_item_calories(restaurant, id)}, {get_item_protein(restaurant, id)}")
+    print(f"Total price: ${meal['total_price']}")
+    print(f"Total calories: {meal['total_cal']}")
+    print(f"Total_protein: {meal['total_protein']}")
+    print(f"Golden ratio: {meal['total_protein'] * 10 / meal['total_cal']:.2f}%\n")
+
+def results_to_df(results, restaurant):
+    rows = []
+    for meal in results:
+        row = {
+            'items': ', '.join([restaurant[id]['menu_item_name'] for id in meal['item_ids']]),
+            'total_price': meal['total_price'],
+            'total_cal': meal['total_cal'],
+            'total_protein': meal['total_protein'],
+            'golden_ratio': round((meal['total_protein'] * 10) / max(meal['total_cal'], 1), 4)
+        }
+        rows.append(row)
+    return pd.DataFrame(rows)
