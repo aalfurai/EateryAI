@@ -175,22 +175,8 @@ def run_solver(seed_id, menu, entree_combos, sides, drinks):
 
 def main():
     print_header()
-
-    # hard coded path for demo, will add db access later
-    path = "EateryAI/data/restaurants.menu_item_variations.json"
     chosen_restaurant = "Chick-fil-A"
-    print(f'\n  Loading {chosen_restaurant.lower()} data...', end='', flush=True)
-    try:
-        menu = data.load_restaurant_data(path, chosen_restaurant)
-    except FileNotFoundError:
-        print(f'\n  x  File not found: {path}')
-        return
-
-    entrees, sides, drinks, desserts = data.build_category_lists(menu)
-    print(f' {len(menu)} items loaded')
-    print(f'  Computing entree combos...', end='', flush=True)
-    entree_combos = data.calculate_entree_combos(entrees)
-    print(f' {len(entree_combos)} combos\n')
+    menu, entrees, entree_combos, sides, drinks, desserts, addons = data.enter_restaurant(chosen_restaurant)
 
     while True:
         select_profile()

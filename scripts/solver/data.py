@@ -2,6 +2,9 @@ import json
 import math
 import itertools
 
+# MAIN FILE IN PLACE OF DB ACCESS
+PATH = "EateryAI/restaurants_data_manual_recat.json"
+
 # category constants
 
 ENTREE_CATEGORIES = {'Classic Chicken', 'Breakfast', 'Cool Wraps', 'Salads'}
@@ -38,8 +41,12 @@ def map_category(raw: str, name: str, idx: int) -> str:
 
 def load_restaurant_data(path: str, restaurant_name: str) -> dict:
     """Returns a dict of CFA items"""
-    with open(path) as f:
-        data = json.load(f)
+    try:
+        with open(path) as f:
+                data = json.load(f)
+    except FileNotFoundError:
+        print(f'\n  x  File not found: {path}')
+        return {}
 
     items = {}
     idx = 0
@@ -65,18 +72,20 @@ def load_restaurant_data(path: str, restaurant_name: str) -> dict:
 
 def build_category_lists(menu: dict) -> tuple:
     """Split menu into category-specific lists in a single pass."""
-    entrees, sides, drinks, desserts = [], [], [], []
-    bucket = {
-        'Entree':  entrees,
-        'Side':    sides,
-        'Drink':   drinks,
-        'Dessert': desserts,
-    }
+    entrees, sides, drinks, desserts, addons = [], [], [], [], []
     for item in menu.values():
-        lst = bucket.get(item['meal_category'])
-        if lst is not None:
-            lst.append(item)
-    return entrees, sides, drinks, desserts
+        match item['meal_category']:
+            case 'Entree':
+                entrees.append(item)
+            case 'Side':
+                sides.append(item)
+            case 'Drink':
+                drinks.append(item)
+            case 'Dessert':
+                desserts.append(item)
+            case 'Add-On':
+                addons.append(item)
+    return entrees, sides, drinks, desserts, addons
 
 # entree combos
 
@@ -106,3 +115,14 @@ def calculate_entree_combos(entrees: list, max_count=2) -> list:
             })
             combo_id += 1
     return combos
+
+def enter_restaurant(restaurant_name: str) -> dict:
+    """Load restaurant data and build category lists."""
+    print(f'\n  Loading {restaurant_name.lower()} data...', end='', flush=True)
+    menu = load_restaurant_data(PATH, restaurant_name)
+    entrees, sides, drinks, desserts, addons = build_category_lists(menu)
+    print(f' {len(menu)} items loaded')
+    print(f'  Computing entree combos...', end='', flush=True)
+    entree_combos = calculate_entree_combos(entrees)
+    print(f' {len(entree_combos)} combos\n')
+    return menu, entrees, entree_combos, sides, drinks, desserts, addons
