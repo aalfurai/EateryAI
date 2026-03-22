@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
-from schemas.constraints import Constraints
-from schemas.weights import Weights
+from scripts.schemas.constraints import Constraints
+from scripts.schemas.weights import Weights
 
 @dataclass
 class User:
