@@ -36,7 +36,7 @@ def map_category(raw: str, name: str, idx: int) -> str:
 
 # data loading
 
-def load_cfa(path: str) -> dict:
+def load_restaurant_data(path: str, restaurant_name: str) -> dict:
     """Returns a dict of CFA items"""
     with open(path) as f:
         data = json.load(f)
