@@ -1,27 +1,33 @@
 import itertools
 import copy
 
-def score_and_rank_meals(results: list, menu: dict) -> list:
+from schemas import User
+
+def score_and_rank_meals(user: User, results: list) -> list:
     scored = []
     diverse = set()
     for meal in results:
         # quick fix to diversify results
+        # NOTE: find a way to diversify results (if required categories is 1 then this breaks)
         if frozenset((meal['item_ids'][0], meal['item_ids'][1])) in diverse or frozenset((meal['item_ids'][0], meal['item_ids'][2])) in diverse:
             continue
         diverse.add(frozenset((meal['item_ids'][0], meal['item_ids'][1])))
         diverse.add(frozenset((meal['item_ids'][0], meal['item_ids'][2])))
 
-        protein_deficit = max(0, USER_PROTEIN - meal['total_protein']) / USER_PROTEIN
-        cal_excess = max(0, meal['total_cal']   - USER_CAL)   / USER_CAL
-        price_excess = max(0, meal['total_price'] - USER_PRICE) / USER_PRICE
-        cheap_bonus = max(0, USER_PRICE - meal['total_price']) / USER_PRICE
+        c = user.constraints
+        w = user.weights
+
+        protein_deficit = max(0, c.protein - meal['total_protein']) / c.protein
+        cal_excess = max(0, meal['total_cal']   - c.calories)   / c.calories
+        price_excess = max(0, meal['total_price'] - c.price) / c.price
+        cheap_bonus = max(0, c.price - meal['total_price']) / c.price
         golden_ratio = (meal['total_protein'] * 10) / max(meal['total_cal'], 1)
         score = (
-            W_PROTEIN * protein_deficit +
-            W_CAL * cal_excess +
-            W_PRICE * price_excess -
-            W_PRICE * cheap_bonus -
-            W_PROTEIN * golden_ratio
+            w.protein * protein_deficit +
+            w.calories * cal_excess +
+            w.protein * price_excess -
+            w.protein * cheap_bonus -
+            w.protein * golden_ratio
         )
         scored.append({**meal, 'score': score, 'golden_ratio': golden_ratio})
     return sorted(scored, key=lambda m: m['score'])
@@ -46,29 +52,33 @@ def get_cand_items(seed_id, category,
     elif category == "Add-on":
         return addons
 
-def intermediate_prune(meals, k=50):
+def intermediate_prune(user: User, meals, k=50):
     scores = []
-    print(len(meals))
+    print(f'  pruning {len(meals)} meals')
+    c = user.constraints
+    w = user.weights
     for meal in meals:
         # cheaper is always better
-        price_efficiency = meal['total_price'] / USER_PRICE
+        price_efficiency = meal['total_price'] / c.price
         # calories should always be close to the user's target
-        cal_dev = abs(meal['total_cal'] - USER_CAL) / USER_CAL
+        cal_dev = abs(meal['total_cal'] - c.calories) / c.calories
         # protein should always meet or exceed the user's target
-        protein_score = 1 / (meal['total_protein'] / USER_PROTEIN)
+        protein_score = 1 / (meal['total_protein'] / c.protein)
         golden_ratio = (meal['total_protein'] * 10) / max(meal['total_cal'], 1)
 
         # lower score is better
-        score = W_PRICE * price_efficiency + W_CAL * cal_dev + W_PROTEIN * (protein_score - golden_ratio)
+        score = w.price * price_efficiency + w.calories * cal_dev + w.protein * (protein_score - golden_ratio)
         scores.append(score)
     
     top_k_indices = sorted(range(len(scores)), key=lambda i: scores[i])[:k]
     return [meals[i] for i in top_k_indices]
     
-def build_meal(seed_id, required_categories, restaurant, 
+# NOTE: this function should be broken down more
+def build_meal(user: User, seed_id, required_categories, restaurant, 
                entree_combos=None, sides=None, drinks=None, desserts=None, addons=None,
                build_full=True):
-    
+    c = user.constraints
+
     seed_item = restaurant[seed_id]
 
     current_meals = []
@@ -113,8 +123,8 @@ def build_meal(seed_id, required_categories, restaurant,
 
             cand_items = [
                 item for item in cand_items
-                if meal['total_price'] + item['price'] <= USER_PRICE + PRICE_TOL
-                and meal['total_cal']  + item['calories'] <= USER_CAL + CAL_TOL
+                if meal['total_price'] + item['price'] <= c.price + c.price_tol_pct
+                and meal['total_cal']  + item['calories'] <= c.calories + c.calories_tol_pct
             ]
 
             for item in cand_items:
@@ -133,7 +143,7 @@ def build_meal(seed_id, required_categories, restaurant,
                 new_meal['total_price'] = round(new_meal['total_price'], 2)
                 new_meals.append(new_meal)
 
-        current_meals = intermediate_prune(new_meals)
+        current_meals = intermediate_prune(user, new_meals)
     
     return current_meals
 
@@ -159,15 +169,15 @@ def display_meal(restaurant, meal):
     print(f"Total_protein: {meal['total_protein']}")
     print(f"Golden ratio: {meal['total_protein'] * 10 / meal['total_cal']:.2f}%\n")
 
-def results_to_df(results, restaurant):
-    rows = []
-    for meal in results:
-        row = {
-            'items': ', '.join([restaurant[id]['menu_item_name'] for id in meal['item_ids']]),
-            'total_price': meal['total_price'],
-            'total_cal': meal['total_cal'],
-            'total_protein': meal['total_protein'],
-            'golden_ratio': round((meal['total_protein'] * 10) / max(meal['total_cal'], 1), 4)
-        }
-        rows.append(row)
-    return pd.DataFrame(rows)
+# def results_to_df(results, restaurant):
+#     rows = []
+#     for meal in results:
+#         row = {
+#             'items': ', '.join([restaurant[id]['menu_item_name'] for id in meal['item_ids']]),
+#             'total_price': meal['total_price'],
+#             'total_cal': meal['total_cal'],
+#             'total_protein': meal['total_protein'],
+#             'golden_ratio': round((meal['total_protein'] * 10) / max(meal['total_cal'], 1), 4)
+#         }
+#         rows.append(row)
+#     return pd.DataFrame(rows)

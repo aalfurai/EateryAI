@@ -37,5 +37,4 @@ class Weights:
             price=data.get("price", 0.20),
             calories=data.get("calories", 0.40),
             protein=data.get("protein", 0.40),
-            cheap=data.get("cheap", 0.20),
         )
