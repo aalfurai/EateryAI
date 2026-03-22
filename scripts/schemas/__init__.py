@@ -1,5 +1,6 @@
-from scripts.schemas.constraints import Constraints
-from scripts.schemas.weights import Weights
-from scripts.schemas.user import User
+from schemas.constraints import Constraints
+from schemas.weights import Weights
+from schemas.user import User
+from schemas.restaurant import Restaurant
 
-__all__ = ["Constraints", "Weights", "User"]
+__all__ = ["Constraints", "Weights", "User", "Restaurant"]

@@ -1,9 +1,7 @@
-import json
 import math
-import itertools
-import os
-import mc_functions as mc
-import data as data
+from solver import mc_functions as mc
+from schemas import Restaurant
+from solver import data
 
 def sync_globals():
     """To sync globals between files, better fix later"""
@@ -19,7 +17,7 @@ def sync_globals():
 
 def clear_screen():
     """Clears terminal screen"""
-    os.system('clear')
+    # os.system('clear')
 
 # GLOBAL DUMMY DATA
 
@@ -61,7 +59,7 @@ DIVIDER2 = '═' * 60
 
 def print_header():
     print(f'\n{DIVIDER2}')
-    print('EATERY MEAL SOLVER  —  Chick-fil-A Demo')
+    print('EATERY MEAL SOLVER  —  Demo')
     print(f'{DIVIDER2}\n')
 
 def print_constraints():
@@ -138,7 +136,7 @@ def input_constraints():
     print()
 
 def select_seed(menu: dict) -> int:
-    entrees = [v for v in menu.values() if v['meal_category'] == 'Entree']
+    entrees = [v for v in menu.values() if v['category'] == 'Entree']
     clear_screen()
     print_header()
     print_constraints()
@@ -152,37 +150,37 @@ def select_seed(menu: dict) -> int:
     print(f'\nSeed: {seed["menu_item_name"]}\n')
     return seed['index']
 
-def run_solver(seed_id, menu, entree_combos, sides, drinks):
+def run_solver(seed_id, restaurant: Restaurant):
     clear_screen()
     print_header()
     print_constraints()
     print('  Building meals...', end='', flush=True)
-    results = mc.build_meal(seed_id, REQUIRED_CATEGORIES, menu,
-                            entree_combos=entree_combos,
-                            sides=sides, drinks=drinks)
+    results = mc.build_meal(seed_id, REQUIRED_CATEGORIES, restaurant.menu,
+                            entree_combos=restaurant.entree_combos,
+                            sides=restaurant.sides, drinks=restaurant.drinks)
     print(f' done - {len(results)} candidates\n')
 
     if not results:
         print('No meals found within your constraints. Try adjusting price or calories.\n')
         return
 
-    ranked = mc.score_and_rank_meals(results, menu)
+    ranked = mc.score_and_rank_meals(results, restaurant.menu)
     top    = ranked[:3]
 
     print(f'  Top {len(top)} meals:\n')
     for i, meal in enumerate(top):
-        print_meal(i, meal, menu)
+        print_meal(i, meal, restaurant.menu)
 
 def main():
     print_header()
-    chosen_restaurant = "Chick-fil-A"
-    menu, entrees, entree_combos, sides, drinks, desserts, addons = data.enter_restaurant(chosen_restaurant)
+    chosen_restaurant = "Chick-fil-a"
+    restaurant = data.enter_restaurant(chosen_restaurant)
 
     while True:
         select_profile()
         input_constraints()
-        seed_id = select_seed(menu)
-        run_solver(seed_id, menu, entree_combos, sides, drinks)
+        seed_id = select_seed(restaurant.menu)
+        run_solver(seed_id, restaurant)
 
         if prompt('Build another meal? (y/n)', 'y').lower() != 'y':
             clear_screen()
