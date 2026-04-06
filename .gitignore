@@ -1,3 +1,5 @@
+.DS_Store
+
 # Recategorization Files
 *corrected_category.json
 *unknown_category.json
