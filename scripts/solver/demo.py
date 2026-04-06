@@ -2,6 +2,8 @@ import math
 from solver import mc_functions as mc
 from schemas import Restaurant, User, Constraints, Weights
 from solver import data
+from pathlib import Path
+from solver.setup import setupData
 
 # simulate user db
 USERS = [User(1, "tyler")]
@@ -184,4 +186,6 @@ def main():
             break
 
 if __name__ == '__main__':
+    if not Path('../restaurants_data_manual_recat.json').exists():
+        setupData()
     main()
