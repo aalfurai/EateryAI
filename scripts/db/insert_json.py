@@ -12,6 +12,11 @@ def to_numeric(value, default=None):
     except (ValueError, TypeError):
         return default
 
+def check_duplicate_id():
+    return
+
+
+
 def insert_meals_from_json(file_path):
     conn = get_db_connection()
     if not conn: 
@@ -96,5 +101,38 @@ def insert_meals_from_json(file_path):
         cur.close()
         conn.close()
 
+def find_restaurant_items(file_path, name):
+    food_items = []
+    
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            if isinstance(data, dict):
+                data = [data]
+
+            for item in data:
+                if item.get('restaurant_name', '').lower() == name.strip().lower():
+                    
+                    meal_type = "X"
+                    
+                    item_info = {
+                        "name": item.get('menu_item_name'),
+                        "type": meal_type,
+                        "price": item.get('price'),
+                        "calories": item.get('nutrition_info', {}).get('calories')
+                    }
+                    food_items.append(item_info)
+
+        print(f"{'MENU ITEM':<40} | {'TYPE':<20} | {'PRICE':<8} | {'Calories':<6}")
+        print("-" * 75)
+        for c_item in food_items:
+            print(f"{c_item['name'][:38]:<40} | {c_item['type']:<20} | ${c_item['price']:<8} | {c_item['calories']:>6}")
+
+    except FileNotFoundError:
+        print("File not found. Please check the path.")
+    except json.JSONDecodeError:
+        print("Error decoding JSON. Ensure the file is valid.")
+
 if __name__ == "__main__":
-    insert_meals_from_json('data/restaurants.menu_item_variations.json')
+    # insert_meals_from_json('data/restaurants.menu_item_variations.json')
+    find_restaurant_items('data/restaurants.menu_item_variations.json', input("Enter restaurant name: "))
