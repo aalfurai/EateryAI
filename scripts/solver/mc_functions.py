@@ -123,8 +123,8 @@ def build_meal(user: User, seed_id, required_categories, restaurant,
 
             cand_items = [
                 item for item in cand_items
-                if meal['total_price'] + item['price'] <= c.price + c.price_tol_pct
-                and meal['total_cal']  + item['calories'] <= c.calories + c.calories_tol_pct
+                if meal['total_price'] + item['price'] <= c.price + c.get_price
+                and meal['total_cal']  + item['calories'] <= c.calories + c.get_calories
             ]
 
             for item in cand_items:
