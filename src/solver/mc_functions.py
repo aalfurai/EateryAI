@@ -1,7 +1,7 @@
 import itertools
 import copy
 
-from schemas import User
+from EateryAI.src.schemas import User
 
 def score_and_rank_meals(user: User, results: list) -> list:
     scored = []

@@ -1,6 +1,17 @@
 from dataclasses import dataclass, field
 
 @dataclass
+class SQLData:
+    item_id:        str
+    menu_item_id:   str
+    restaurant_id:  int
+    menu_item_name: str
+    category:       str
+    price:          float
+    golden_ratio:   float
+    ai_description: str
+
+@dataclass
 class Restaurant:
     name:          str
     menu:          dict  = field(default_factory=dict)
@@ -37,6 +48,18 @@ class Restaurant:
         if result is None:
             raise ValueError(f"Unknown category: {category}. Must be one of {list(category_map.keys())}")
         return result
+    
+    def to_json(self):
+        """Convert restaurant data to JSON-serializable format."""
+        return {
+            'name': self.name,
+            'entrees': self.entrees,
+            'sides': self.sides,
+            'drinks': self.drinks,
+            'desserts': self.desserts,
+            'addons': self.addons,
+            'entree_combos': self.entree_combos
+        }
 
     # ── stats ─────────────────────────────────────────────────────────────────
 
