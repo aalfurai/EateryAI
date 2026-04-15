@@ -1,5 +1,5 @@
 import math
-from solver import mc_functions as mc
+from solver import functions as mc
 from schemas import Restaurant, User, Constraints, Weights
 from solver import data
 from pathlib import Path

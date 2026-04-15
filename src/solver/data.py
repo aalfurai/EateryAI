@@ -86,6 +86,8 @@ def enter_restaurant(restaurant_name: str):
     """Load restaurant data and build category lists."""
     print(f'\n  Loading {restaurant_name.lower()} data...', end='', flush=True)
     menu = load_restaurant_data(PATH, restaurant_name)
+    if not menu:
+        raise ValueError(f"No data found for restaurant: {restaurant_name}")
     entrees, sides, drinks, desserts, addons = build_category_lists(menu)
     print(f' {len(menu)} items loaded')
     print(f'  Computing entree combos...', end='', flush=True)

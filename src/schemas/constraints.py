@@ -48,6 +48,7 @@ class Constraints:
     def get_protein(self) -> int:
         return math.ceil(self.protein * self.protein_tol_pct)
 
+    @classmethod
     def to_dict(self) -> dict:
         return {
             "price": self.price,

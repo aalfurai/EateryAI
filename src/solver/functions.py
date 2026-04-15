@@ -1,7 +1,7 @@
 import itertools
 import copy
 
-from EateryAI.src.schemas import User
+from schemas import User
 
 def score_and_rank_meals(user: User, results: list) -> list:
     scored = []
@@ -79,7 +79,7 @@ def build_meal(user: User, seed_id, required_categories, restaurant,
                build_full=True):
     c = user.constraints
 
-    seed_item = restaurant[seed_id]
+    seed_item = restaurant['entrees'][seed_id]
 
     current_meals = []
 
@@ -169,15 +169,20 @@ def display_meal(restaurant, meal):
     print(f"Total_protein: {meal['total_protein']}")
     print(f"Golden ratio: {meal['total_protein'] * 10 / meal['total_cal']:.2f}%\n")
 
-# def results_to_df(results, restaurant):
-#     rows = []
-#     for meal in results:
-#         row = {
-#             'items': ', '.join([restaurant[id]['menu_item_name'] for id in meal['item_ids']]),
-#             'total_price': meal['total_price'],
-#             'total_cal': meal['total_cal'],
-#             'total_protein': meal['total_protein'],
-#             'golden_ratio': round((meal['total_protein'] * 10) / max(meal['total_cal'], 1), 4)
-#         }
-#         rows.append(row)
-#     return pd.DataFrame(rows)
+
+# functions from demo
+def select_categories() -> set:
+
+    # NOTE: should add option to request multiple categories
+    options = [
+        ('Entree',  True),
+        ('Side',    True),
+        ('Drink',   True),
+        ('Dessert', False),
+        ('Add-on',  False),
+    ]
+
+    categories = [] # list of selected categories
+
+    print(f'\n  Selected: {", ".join(sorted(categories))}\n')
+    return categories

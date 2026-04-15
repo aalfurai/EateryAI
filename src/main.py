@@ -1,40 +1,31 @@
-from fastapi import FastAPI
-from contextlib import asynccontextmanager
-import json
-from solver.data import enter_restaurant
+from fastapi import FastAPI, HTTPException
+from api.menu import router as menu_router
+from pydantic import BaseModel
+from services.pipeline import PipelineService
+from services.data import DataService
+from schemas.user import User
 
 
 app = FastAPI()
-restaurant_cache = {}
-
-def get_restaurant_data(restaurant_name: str):
-    if restaurant_name not in restaurant_cache:
-        restaurant_cache[restaurant_name] = enter_restaurant(restaurant_name)
-    return restaurant_cache[restaurant_name]
+app.include_router(menu_router)
+dataService = DataService(base_url="http://localhost:8000")  # NOTE: Update with actual backend URL
+pipeline = PipelineService(data_service=dataService)
 
 @app.get("/")
 async def root():
     return {"message": "Welcome to Eatery"}
 
-@app.get("/menu")
-def menu():
-    with open("../restaurants_data_manual_recat.json") as file:
-        menu_data = json.load(file)
-    return menu_data
+class RecommendRequest(BaseModel):
+    user_id: str
+    restaurant_name: str | None = None
+    categories: list[str] = ["Entree", "Side", "Drink"]
+    seed_id: str | None = None
 
-@app.get("/menu/{restaurant}/{item_id}")
-def menu(restaurant: str, item_id: int):
-    restaurant_data = get_restaurant_data(restaurant)
-    if restaurant_data is None:
-        return {"error": f"Restaurant '{restaurant}' not found"}
-    item = restaurant_data.get_item(item_id)
-    if item is None:
-        return {"error": f"Item ID '{item_id}' not found in restaurant '{restaurant}'"}
-    return item
+@app.post("/recommend")
+def recommend(req: RecommendRequest):
+    return pipeline.recommend_from_seed(req.user_id, req.restaurant_name, req.seed_id)
 
-@app.get("/menu/{restaurant}")
-def menu(restaurant: str):
-    restaurant_data = get_restaurant_data(restaurant)
-    if restaurant_data is None:
-        return {"error": f"Restaurant '{restaurant}' not found"}
-    return restaurant_data.to_json()
+@app.get("/users/{user_id}")
+def get_user(user_id: str):
+    user = User(user_id=user_id, name=f"Test User {user_id}")
+    return user.to_dict()

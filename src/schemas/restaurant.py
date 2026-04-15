@@ -49,7 +49,7 @@ class Restaurant:
             raise ValueError(f"Unknown category: {category}. Must be one of {list(category_map.keys())}")
         return result
     
-    def to_json(self):
+    def to_dict(self):
         """Convert restaurant data to JSON-serializable format."""
         return {
             'name': self.name,
@@ -60,6 +60,20 @@ class Restaurant:
             'addons': self.addons,
             'entree_combos': self.entree_combos
         }
+    
+    @classmethod
+    def from_dict(cls, data: dict) -> "Restaurant":
+        # TODO: UPDATE FOR DB KEYS
+        return cls(
+            name = data['name'],
+            menu = data,
+            entrees = data.get('entrees', []),
+            sides = data.get('sides', []),
+            drinks = data.get('drinks', []),
+            desserts = data.get('desserts', []),
+            addons = data.get('addons', []),
+            entree_combos = data.get('entree_combos', [])
+        )
 
     # ── stats ─────────────────────────────────────────────────────────────────
 
