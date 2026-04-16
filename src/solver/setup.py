@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 CATEGORIES = {
     "Entree": {"entree", "breakfast", "lunch", "dinner", "soup", "salad", "burrito", "taco", "kabob", "fish", "meal",
@@ -68,7 +69,7 @@ def categorize_item(item):
     return None
 
 def setupData():
-    with open("../restaurants.menu_item_variations.json", "r") as f:
+    with open("restaurants.menu_item_variations.json", "r", encoding='utf-8') as f:
         data = json.load(f)
     
     good_cat = []
@@ -82,5 +83,9 @@ def setupData():
         else:
             bad_cat.append(item)
 
-    with open("../restaurants_data_manual_recat.json", "w") as correct:
+    with open("restaurants_data_manual_recat.json", "w", encoding='utf-8') as correct:
         json.dump(good_cat, correct, indent=4)
+
+if __name__ == "__main__":
+    if not Path('restaurants_data_manual_recat.json').exists():
+        setupData()

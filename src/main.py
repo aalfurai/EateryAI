@@ -1,13 +1,13 @@
-from fastapi import FastAPI, HTTPException
-from api.menu import router as menu_router
+from fastapi import FastAPI
+from fastapi import HTTPException
 from pydantic import BaseModel
 from services.pipeline import PipelineService
 from services.data import DataService
 from schemas.user import User
+from dependencies import get_all_menus
 
 
 app = FastAPI()
-app.include_router(menu_router)
 dataService = DataService(base_url="http://localhost:8000")  # NOTE: Update with actual backend URL
 pipeline = PipelineService(data_service=dataService)
 
@@ -29,3 +29,21 @@ def recommend(req: RecommendRequest):
 def get_user(user_id: str):
     user = User(user_id=user_id, name=f"Test User {user_id}")
     return user.to_dict()
+
+@app.get("/menu")
+def menu():
+    return get_all_menus()
+
+@app.get("/menu/{restaurant}/{item_id}")
+def menu(restaurant: str, item_id: int):
+    restaurant_data = dataService.load_restaurant(restaurant)
+    try:
+        item = restaurant_data.get_item(item_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"Item ID '{item_id}' not found in restaurant '{restaurant}'")
+    return item
+
+@app.get("/menu/{restaurant}")
+def menu(restaurant: str):
+    restaurant_data = dataService.load_restaurant(restaurant)
+    return restaurant_data.to_dict()

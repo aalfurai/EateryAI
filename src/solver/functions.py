@@ -1,7 +1,7 @@
 import itertools
 import copy
 
-from schemas import User
+from schemas import User, Restaurant
 
 def score_and_rank_meals(user: User, results: list) -> list:
     scored = []
@@ -74,12 +74,12 @@ def intermediate_prune(user: User, meals, k=50):
     return [meals[i] for i in top_k_indices]
     
 # NOTE: this function should be broken down more
-def build_meal(user: User, seed_id, required_categories, restaurant, 
+def build_meal(user: User, seed_id, required_categories, restaurant: Restaurant, 
                entree_combos=None, sides=None, drinks=None, desserts=None, addons=None,
                build_full=True):
     c = user.constraints
 
-    seed_item = restaurant['entrees'][seed_id]
+    seed_item = restaurant.get_item(int(seed_id))
 
     current_meals = []
 

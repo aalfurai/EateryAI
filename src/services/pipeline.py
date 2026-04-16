@@ -12,10 +12,9 @@ class PipelineService:
     def recommend_from_seed(
         self, user_id: str, restaurant_name: str, seed_id: str = None
     ) -> list[Meal]:
-        """User pre-selected an item; build the best combo around it."""
-        user       = self.data.load_user(user_id)
+        user       = self.data.load_user(user_id) # NOTE: user data should be pulled once at the start of session
         restaurant = self.data.load_restaurant(restaurant_name)
-        anchor     = self.data.load_item(restaurant_name, seed_id)
+        anchor     = restaurant.get_item(int(seed_id)) if seed_id else None
         return self._build_top_combos(user, restaurant, anchor_item=anchor)
 
     def _build_top_combos(self, user: User, restaurant: Restaurant, anchor_item: dict | None) -> list[Meal]:
@@ -24,7 +23,7 @@ class PipelineService:
             user=user,
             seed_id=anchor_item['index'] if anchor_item else None,
             required_categories={'Entree', 'Side', 'Drink'},
-            restaurant=restaurant.menu,
+            restaurant=restaurant,
             entree_combos=restaurant.entree_combos,
             sides=restaurant.sides,
             drinks=restaurant.drinks,
