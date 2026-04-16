@@ -11,7 +11,7 @@ def add_new_restaurant(conn, restaurant_data: dict):
     with conn.cursor() as cur:
         query = """
             INSERT INTO restaurants (restaurant_id, restaurant_name, menu_card_image)
-            VALUES (%s, %s, %s)
+            VALUES (%s, %s, %s);
         """
         cur.execute(query, (
             restaurant_data["restaurant_id"], 
@@ -26,19 +26,20 @@ def add_new_restaurant(conn, restaurant_data: dict):
 def get_all_restaurants(conn):
     """Returns all restaurants."""
     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-        cur.execute("SELECT * FROM restaurants")
+        cur.execute("SELECT * FROM restaurants;")
         return cur.fetchall()
 
 def find_restaurant_by_name(conn, name: str):
     """Searches for a restaurant using a case-insensitive partial match."""
     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-        pass
-
+        cur.execute("SELECT * FROM restaurants WHERE restaurant_name ILIKE %s;", (f"%{name}%",))
+        return cur.fetchall()
+    
 def get_menu_items_by_restaurant(conn, restaurant_id: int):
     """Fetches all food items for a specific restaurant ID."""
     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-        pass
-
+        cur.execute("SELECT * FROM menu_items WHERE restaurant_id = %s;", (restaurant_id,))
+        return cur.fetchall()
 
 # Update
 
@@ -49,11 +50,12 @@ def get_menu_items_by_restaurant(conn, restaurant_id: int):
 def delete_restaurant(conn, restaurant_id: int):
     """Removes restaurant."""
     with conn.cursor() as cur:
-        pass
+        cur.execute("DELETE FROM restaurants WHERE restaurant_id = %s;", (restaurant_id,))    
+        conn.commit()
+    
     conn.commit()
 
 def delete_item_completely(conn, item_id: str):
     with conn.cursor() as cur:
-        cur.execute("DELETE FROM nutrition_info WHERE item_id = %s", (item_id,))
-        cur.execute("DELETE FROM menu_items WHERE item_id = %s", (item_id,))
+        cur.execute("DELETE FROM menu_items WHERE item_id = %s;", (item_id,))
     conn.commit()
