@@ -43,7 +43,8 @@ def get_menu_items_by_restaurant(conn, restaurant_id: int):
         cur.execute("SELECT * FROM menu_items WHERE restaurant_id = %s;", (restaurant_id,))
         return cur.fetchall()
 
-def find_food_item(conn, food_item: str, price: NumRange = None, calories: NumRange = None, protein: NumRange = None):
+def find_food_item(conn, food_item: str, 
+                   price: NumRange = None, calories: NumRange = None, protein: NumRange = None):
     """
         Finds a particular food item across all restaurants using a case-insensitive search
         including mix-case (ILIKE) w/ filters.
