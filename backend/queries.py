@@ -1,4 +1,5 @@
 import psycopg2.extras
+import query_helpers
 
 # CRUD functions
 # notes: using RealDictCursor for the purpose of making result queries easier to navigate
@@ -39,6 +40,26 @@ def get_menu_items_by_restaurant(conn, restaurant_id: int):
     """Fetches all food items for a specific restaurant ID."""
     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute("SELECT * FROM menu_items WHERE restaurant_id = %s;", (restaurant_id,))
+        return cur.fetchall()
+    
+def find_food_item(conn, food_item: str):
+    """
+        Finds a particular food item across all restaurants using a case-insensitive search
+        including mix-case (ILIKE).
+    """
+    with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        query = """
+            SELECT
+                r.restaurant_name,
+                m.menu_item_name,
+                m.category,
+                m.price,
+                m.golden_ratio
+            FROM menu_items m
+            JOIN restaurants r ON m.restaurant_id = r.restaurant_id
+            WHERE m.menu_item_name ILIKE %s;
+        """
+        cur.execute(query, (f"%{food_item}%",))
         return cur.fetchall()
 
 # Update
