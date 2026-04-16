@@ -19,7 +19,7 @@ def check_duplicate_id():
 
 def insert_meals_from_json(file_path):
     with dbc.EateryDatabaseConnection() as conn:
-        if not conn: 
+        if not conn:
             return
         cur = conn.cursor()
         start_time = time.time()

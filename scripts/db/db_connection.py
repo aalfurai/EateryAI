@@ -51,7 +51,7 @@ class EateryDatabaseConnection:
             return None
 
 
-if __name__ == "__main__":
-    eat = EateryDatabaseConnection()
-    with eat as es:
-        print("hi i just made a connection")
+# if __name__ == "__main__":
+#     eat = EateryDatabaseConnection()
+#     with eat as es:
+#         print("hi i just made a connection")
