@@ -5,6 +5,8 @@ from services.pipeline import PipelineService
 from services.data import DataService
 from schemas.user import User
 from dependencies import get_all_menus
+from backend import queries
+from db.db_connection import EateryDatabaseConnection
 
 
 app = FastAPI()
@@ -31,17 +33,28 @@ def get_user(user_id: str):
     return user.to_dict()
 
 @app.get("/menu")
-def menu():
-    return get_all_menus()
+def all_restaurants():
+    with EateryDatabaseConnection() as conn:
+        return queries.get_all_restaurants(conn)
 
 @app.get("/menu/{restaurant}/{item_id}")
 def menu(restaurant: str, item_id: int):
-    restaurant_data = dataService.load_restaurant(restaurant)
-    try:
-        item = restaurant_data.get_item(item_id)
-    except KeyError:
+    with EateryDatabaseConnection() as conn:
+        restaurant_data = queries.find_restaurant_by_name(conn, restaurant)
+        if not restaurant_data:
+            raise HTTPException(status_code=404, detail=f"Restaurant '{restaurant}' not found")
+        restaurant_id = restaurant_data[0]['restaurant_id']
+        menu_items = queries.get_menu_items_by_restaurant(conn, restaurant_id)
+        if menu_items['item_id'] == item_id:
+            return menu_items["item_id"]
         raise HTTPException(status_code=404, detail=f"Item ID '{item_id}' not found in restaurant '{restaurant}'")
-    return item
+
+    # restaurant_data = dataService.load_restaurant(restaurant)
+    # try:
+    #     item = restaurant_data.get_item(item_id)
+    # except KeyError:
+    #     raise HTTPException(status_code=404, detail=f"Item ID '{item_id}' not found in restaurant '{restaurant}'")
+    # return item
 
 @app.get("/menu/{restaurant}")
 def menu(restaurant: str):
