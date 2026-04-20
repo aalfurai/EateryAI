@@ -38,7 +38,7 @@ def all_restaurants():
         return queries.get_all_restaurants(conn)
 
 @app.get("/menu/{restaurant}/{item_id}")
-def menu(restaurant: str, item_id: int):
+def get_restaurant_item(restaurant: str, item_id: int):
     with EateryDatabaseConnection() as conn:
         restaurant_data = queries.find_restaurant_by_name(conn, restaurant)
         if not restaurant_data:
