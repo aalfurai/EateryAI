@@ -1,0 +1,1 @@
+// discover page (show menu items)

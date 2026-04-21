@@ -1,0 +1,1 @@
+// home screen (show restaurants for no-seed start)
