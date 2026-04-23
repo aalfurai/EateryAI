@@ -16,9 +16,11 @@ class DataService:
         self._restaurant_cache = {}
 
     def load_user(self, user_id: str) -> User:
-        r = httpx.get(f"{self.base_url}/users/{user_id}")
-        r.raise_for_status()
-        return User.from_dict(r.json())
+        if self.base_url:
+            r = httpx.get(f"{self.base_url}/users/{user_id}")
+            r.raise_for_status()
+            return User.from_dict(r.json())
+        return User(user_id=user_id, name=f"Test User {user_id}")
 
     def load_restaurant(self, restaurant_name: str) -> Restaurant:
         try:

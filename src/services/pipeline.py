@@ -3,33 +3,35 @@ from schemas.restaurant import Restaurant
 from schemas.user import User
 import solver.functions as solver
 from services.data import DataService
+from services.session import SessionService
 
 class PipelineService:
 
     def __init__(self, data_service: DataService):
         self.data = data_service
+        self.session = SessionService(data_service)
 
-    def recommend_from_seed(
-        self, user_id: str, restaurant_name: str, seed_id: str = None
-    ) -> list[Meal]:
-        user       = self.data.load_user(user_id) # NOTE: user data should be pulled once at the start of session
+    def start_session(self, user_id: str) -> User:
+        return self.session.load_user(user_id)
+
+    def recommend_from_seed(self, restaurant_name: str, seed_id: str = None, required_categories: set[str] = None) -> list[Meal]:
         restaurant = self.data.load_restaurant(restaurant_name)
-        anchor     = restaurant.get_item(int(seed_id)) if seed_id else None
-        return self._build_top_combos(user, restaurant, anchor_item=anchor)
+        seed       = restaurant.get_item(int(seed_id)) if seed_id else None
+        return self._build_top_combos(self.session.user, restaurant, seed_item=seed, required_categories=required_categories)
 
-    def _build_top_combos(self, user: User, restaurant: Restaurant, anchor_item: dict | None) -> list[Meal]:
+    def _build_top_combos(self, user: User, restaurant: Restaurant, seed_item: dict | None, required_categories: set[str]) -> list[Meal]:
 
         meals = solver.build_meal(
             user=user,
-            seed_id=anchor_item['index'] if anchor_item else None,
-            required_categories={'Entree', 'Side', 'Drink'},
+            seed_id=seed_item['index'] if seed_item else None,
+            required_categories=required_categories,
             restaurant=restaurant,
             entree_combos=restaurant.entree_combos,
             sides=restaurant.sides,
             drinks=restaurant.drinks,
             desserts=restaurant.desserts,
             addons=restaurant.addons,
-            build_full=bool(anchor_item))
+            build_full=bool(seed_item))
 
         ranked = solver.score_and_rank_meals(user, meals)
         return ranked[:3]
