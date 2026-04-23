@@ -4,6 +4,7 @@ from pathlib import Path
 import httpx
 from schemas.user import User
 from schemas.restaurant import Restaurant
+import pandas as pd
 
 
 PATH = "../restaurants_data_manual_recat.json"
@@ -99,6 +100,13 @@ class DataService:
                 'price':          float(item.get('price', 0.0)),
                 'calories':       int(nutrition.get('calories', 0)),
                 'protein':        int(nutrition.get('protein', 0)),
+                'dietary_fiber':  int(nutrition.get('dietary_fiber', 0)),
+                'sugars':         int(nutrition.get('sugars', 0)),
+                'sodium':         int(nutrition.get('sodium', 0)),
+                'cholesterol':    int(nutrition.get('cholesterol', 0)),
+                'total_carbohydrates': int(nutrition.get('total_carbohydrates', 0)),
+                'potassium':      int(nutrition.get('potassium', 0)),
+                'total_fat':            int(nutrition.get('total_fat', 0)),
                 'serving_size':   nutrition.get('serving_size', ''),
                 'category':       item.get('category')
             }
@@ -121,33 +129,63 @@ class DataService:
                     desserts.append(item)
                 case 'Add-On':
                     addons.append(item)
-        return entrees, sides, drinks, desserts, addons
+        return (
+            pd.DataFrame(entrees),
+            pd.DataFrame(sides),
+            pd.DataFrame(drinks),
+            pd.DataFrame(desserts),
+            pd.DataFrame(addons)
+        )
 
     # entree combos
     @staticmethod
-    def _calculate_entree_combos(entrees: list, max_count=2) -> list:
+    def _calculate_entree_combos(entrees: list, max_count=2) -> pd.DataFrame:
         """Calculate all valid entree combinations up to max_count items."""
         MAX_PRICE    = 100.0
         MAX_CALORIES = 3000
-        MAX_PROTEIN = 500
 
-        combos   = []
+        prices      = entrees['price'].to_numpy()
+        calories    = entrees['calories'].to_numpy()
+        proteins    = entrees['protein'].to_numpy()
+        fibers      = entrees['dietary_fiber'].to_numpy()
+        sugars      = entrees['sugars'].to_numpy()
+        sodiums     = entrees['sodium'].to_numpy()
+        cholesterol = entrees['cholesterol'].to_numpy()
+        carbs       = entrees['total_carbohydrates'].to_numpy()
+        potassium   = entrees['potassium'].to_numpy()
+        fats        = entrees['total_fat'].to_numpy()
+        indices     = entrees['index'].to_numpy()
+        names       = entrees['menu_item_name'].to_numpy()
+        sizes       = entrees['serving_size'].to_numpy()
+
+        entree_combos = []
         combo_id = 1
-        for k in range(1, max_count + 1):
-            for combo in itertools.combinations_with_replacement(entrees, k):
-                total_price    = sum(i['price']    for i in combo)
-                total_calories = sum(i['calories'] for i in combo)
-                total_protein  = sum(i['protein']  for i in combo)
+
+        for k in range(1, max_count+1):
+            for combo_idx in itertools.combinations_with_replacement(range(len(entrees)), k):
+                total_price    = prices[list(combo_idx)].sum()
+                total_calories = calories[list(combo_idx)].sum()
                 if total_price > MAX_PRICE or total_calories > MAX_CALORIES:
                     continue
-                combos.append({
-                    'combo_id':          combo_id,
-                    'entree_ids':        tuple(i['index'] for i in combo),
-                    'entree_names':      tuple(i['menu_item_name'] for i in combo),
-                    'n_entrees':         k,
-                    'price':             round(total_price, 2),
-                    'calories':          total_calories,
-                    'protein':           total_protein,
+
+                i = list(combo_idx)
+                entree_combos.append({
+                    "combo_id":             combo_id,
+                    "entree_ids":           tuple(indices[i]),
+                    "entree_names":         tuple(names[i]),
+                    "n_entrees":            k,
+                    "price":                round(total_price, 2),
+                    "calories":             total_calories,
+                    "protein":              proteins[i].sum(),
+                    "dietary_fiber":        fibers[i].sum(),
+                    "sugars":               sugars[i].sum(),
+                    "sodium":               sodiums[i].sum(),
+                    "cholesterol":          cholesterol[i].sum(),
+                    "total_carbohydrates":  carbs[i].sum(),
+                    "potassium":            potassium[i].sum(),
+                    "total_fat":            fats[i].sum(),
+                    "serving_size_per_item":tuple(sizes[i]),
                 })
                 combo_id += 1
-        return combos
+        
+        return pd.DataFrame(entree_combos)

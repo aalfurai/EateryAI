@@ -4,6 +4,7 @@ from schemas.user import User
 import solver.functions as solver
 from services.data import DataService
 from services.session import SessionService
+import pandas as pd
 
 class PipelineService:
 
@@ -17,9 +18,10 @@ class PipelineService:
     def recommend_from_seed(self, restaurant_name: str, seed_id: str = None, required_categories: set[str] = None) -> list[Meal]:
         restaurant = self.data.load_restaurant(restaurant_name)
         seed       = restaurant.get_item(int(seed_id)) if seed_id else None
-        return self._build_top_combos(self.session.user, restaurant, seed_item=seed, required_categories=required_categories)
+        meals = self._build_top_combos(self.session.user, restaurant, seed_item=seed, required_categories=required_categories)
+        return meals
 
-    def _build_top_combos(self, user: User, restaurant: Restaurant, seed_item: dict | None, required_categories: set[str]) -> list[Meal]:
+    def _build_top_combos(self, user: User, restaurant: Restaurant, seed_item: dict | None, required_categories: set[str]) -> pd.DataFrame:
 
         meals = solver.build_meal(
             user=user,
@@ -32,6 +34,6 @@ class PipelineService:
             desserts=restaurant.desserts,
             addons=restaurant.addons,
             build_full=bool(seed_item))
-
+        
         ranked = solver.score_and_rank_meals(user, meals)
         return ranked[:3]
