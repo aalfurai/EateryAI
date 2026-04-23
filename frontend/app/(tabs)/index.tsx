@@ -11,16 +11,16 @@ export default function Home() {
     "McDonald's",
   ];
 
+  const hues = [0, 130, 220, 30, 300]; 
+
   return (
     <ScrollView>
       <View>
-        {restaurants.map((name) => (
+        {restaurants.map((name, i) => (
           <RestaurantCard
             key={name}
             name={name}
-            onPress={() => {
-              console.log("Pressed", name);
-            }}
+            hue={hues[i % hues.length]}
           />
         ))}
       </View>

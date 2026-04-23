@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "EatAI-Mealbuilder",
+    "slug": "EatAI-Mealbuilder",
+    "scheme": "eataimealbuilder",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
