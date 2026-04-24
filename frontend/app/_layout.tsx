@@ -4,9 +4,8 @@ export default function Layout() {
   return (
     <Stack 
       screenOptions={{
-      contentStyle: { backgroundColor: '#1C1C1E' },
-      headerStyle: { backgroundColor: '#1C1C1E' },
-      headerTintColor: 'white',
+        contentStyle: { backgroundColor: '#010000' },
+        headerShown: false,
     }}/>
   );
 }

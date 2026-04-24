@@ -15,9 +15,9 @@ function formatNameForUrl(name: string) {
 
 function getCardColors(hue: number) {
   return {
-    bgStart: `hsl(${hue}, 20%, 40%)`,
-    bgEnd: `hsl(${hue}, 20%, 20%)`,
-    borderTop: `hsl(${hue}, 30%, 65%)`,
+    bgStart: `hsl(${hue}, 20%, 25%)`,
+    bgEnd: `hsl(${hue}, 20%, 10%)`,
+    borderTop: `hsl(${hue}, 20%, 40%)`,
     borderBottom: `hsl(${hue}, 30%, 25%)`,
   };
 }
