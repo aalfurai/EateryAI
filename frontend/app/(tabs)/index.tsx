@@ -1,5 +1,6 @@
 import { View, ScrollView, StyleSheet, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Redirect } from "expo-router";
 import RestaurantCard from "../../components/RestaurantCard";
 import AppHeader from "../../components/AppHeader";
 
@@ -24,7 +25,7 @@ export default function Home() {
 
       <ScrollView
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 150,
+          paddingBottom: insets.bottom,
         }}
       >
         <Text style={styles.title}>Build Meal By Restaurant</Text>
