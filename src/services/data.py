@@ -189,3 +189,27 @@ class DataService:
                 combo_id += 1
         
         return pd.DataFrame(entree_combos)
+
+    def update_user_constraints(self, user_id: str, **kwargs) -> User:
+        # TODO: replace with DB update query and loop logic
+        user = self.load_user(user_id)
+        user.update_constraints(**kwargs)
+        self._save_user(user)
+        return user
+
+    def update_user_weights(self, user_id: str, **kwargs) -> User:
+        # TODO: replace with DB update query and loop logic
+        user = self.load_user(user_id)
+        user.update_weights(**kwargs)
+        self._save_user(user)
+        return user
+
+    def _save_user(self, user: User):
+        # TODO: DB WRITE
+        # db.execute(
+        #     "UPDATE users SET constraints = %s, weights = %s WHERE user_id = %s",
+        #     (json.dumps(user.constraints.to_dict()), 
+        #      json.dumps(user.weights.to_dict()),
+        #      user.user_id)
+        # )
+        pass
