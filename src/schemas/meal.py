@@ -1,24 +1,35 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 @dataclass
 class Meal:
-    entree: dict
-    sides: list[dict]
-    drink: dict
-    dessert: dict
-    addons: list[dict]
-    score: float
-
-    def __post_init__(self):
-        self.totalPrice = sum(item['price'] for item in [self.entree] + self.sides + [self.drink] + [self.dessert] + self.addons)
-        self.totalCalories = sum(item['calories'] for item in [self.entree] + self.sides + [self.drink] + [self.dessert] + self.addons)
-        self.totalProtein = sum(item['protein'] for item in [self.entree] + self.sides + [self.drink] + [self.dessert] + self.addons)
+    item_ids:           list[int] = field(default_factory=list)
+    Entree_ids:         list[int] = field(default_factory=list)
+    Side_ids:           list[int] = field(default_factory=list)
+    Drink_ids:          list[int] = field(default_factory=list)
+    Addon_ids:          list[int] = field(default_factory=list)
+    Dessert_ids:        list[int] = field(default_factory=list)
+    total_price:        float = 0.0
+    total_cal:          int = 0
+    total_protein:      int = 0
+    total_fiber:        int = 0
+    total_sugars:       int = 0
+    total_sodium:       int = 0
+    total_cholesterol:  int = 0
+    total_carbohydrates:int = 0
+    total_potassium:    int = 0
+    total_fat:          int = 0
+    filled_categories:  set = field(default_factory=set)
+    drink_cal:          int = 0
+    addon_cal:          int = 0
+    filled_categories:  set = field(default_factory=set)
+    total_price:        float = 0.0
+    golden_ratio:       float = 0.0
 
     def get_price(self):
-        return self.totalPrice
+        return self.total_price
     def get_calories(self):
-        return self.totalCalories
+        return self.total_cal
     def get_protein(self):
-        return self.totalProtein
-    def get_score(self):
-        return self.score
+        return self.total_protein
+    # def get_score(self):
+    #     return self.score
