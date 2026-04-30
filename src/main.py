@@ -1,3 +1,10 @@
+import time
+from fastapi import FastAPI, Depends, Request
+from schemas.user import User
+from schemas.requests import SessionRequest, RecommendRequest, ConstraintsRequest, WeightsRequest
+from config.security import create_token, decode_token
+from config.dependencies import pipeline, security, data_service
+
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -21,12 +28,36 @@ app = FastAPI(title="EatAI API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http:localhost:3000"], #NOTE: Add frontend url
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def timer(request: Request, call_next):
+    start_time = time.perf_counter()
+    response = await call_next(request)
+    duration = time.perf_counter() - start_time
+    print(f"{request.method} {request.url.path} — {duration * 1000:.2f}ms")
+    response.headers["X-Process-Time"] = f"{duration * 1000:.2f}ms"
+    return response
+
+@app.get("/")
+def welcome():
+    return {"message": "Welcome to the Eatery meal recommendation API!"}
+
+@app.post("/")
+def root(req: SessionRequest):
+    user = pipeline.start_session(req.user_id)
+    token = create_token(req.user_id)
+    return {"token": token, "user": user.to_dict()}
+
+@app.post("/recommend")
+def recommend(req: RecommendRequest, credentials=Depends(security)):
+    user_id = decode_token(credentials.credentials)  # NOTE: token is not currently used for anything beyond auth, but will be used to pull user preferences in the future
+    user = data_service.load_user(user_id)
+    return pipeline.recommend(user, req.restaurant_name, req.seed_id, req.categories)
 
 # ─────────────────────────────────────────────
 # In-memory stubs
@@ -86,6 +117,7 @@ class SaveMealRequest(BaseModel):
 # ─────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────
+
 
 VALID_CATEGORIES = {"Entree", "Side", "Drink", "Dessert", "Add-On"}
 
@@ -197,6 +229,19 @@ def get_user(user_id: str):
     """Return user profile. Corresponds to the Profile / @User screen."""
     return _get_user(user_id).to_dict()
 
+@app.put("/user/constraints")
+def update_constraints(req: ConstraintsRequest, credentials=Depends(security)):
+    user_id = decode_token(credentials.credentials)
+    updates = {k: v for k, v in req.model_dump().items() if v is not None}
+    user    = data_service.update_user_constraints(user_id, **updates)
+    return user.to_dict()
+
+@app.put("/user/weights")
+def update_weights(req: WeightsRequest, credentials=Depends(security)):
+    user_id = decode_token(credentials.credentials)
+    updates = {k: v for k, v in req.model_dump().items() if v is not None}
+    user    = data_service.update_user_weights(user_id, **updates)
+    return user.to_dict()
 
 @app.patch("/users/{user_id}/constraints", tags=["Users"])
 def update_constraints(user_id: str, req: ConstraintsUpdateRequest):
