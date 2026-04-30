@@ -1,7 +1,16 @@
 from pydantic import BaseModel
-
-class SessionRequest(BaseModel):
+from schemas.constraints import Constraints
+from schemas.weights import Weights
+    
+class LoginRequest(BaseModel):
+    username: str
     user_id: str
+
+class RegisterRequest(BaseModel):
+    user_id: str
+    name: str
+    constraints: Constraints | None = None
+    weights: Weights | None = None
 
 class RecommendRequest(BaseModel):
     restaurant_name: str | None = None
@@ -25,3 +34,6 @@ class WeightsRequest(BaseModel):
     sodium: float | None = None
     drink_cal: float | None = None
     addon_cal: float | None = None
+
+class SaveMealRequest(BaseModel):
+    meal: dict
