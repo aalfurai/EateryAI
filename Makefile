@@ -1,19 +1,37 @@
 VENV = venv
-PYTHON = $(VENV)/Scripts/python
-PIP = $(VENV)/Scripts/pip
+PYTHON311 := $(shell py -3.11 -c "import sys; print(sys.executable)" 2>/dev/null || python3.11 -c "import sys; print(sys.executable)" 2>/dev/null || python3 -c "import sys; print(sys.executable)" 2>/dev/null)
 
-.PHONY: setup run
+UNAME := $(shell uname -s)
 
-setup: $(VENV)/Scripts/activate
+ifeq ($(findstring MINGW, $(UNAME)), MINGW)
+    VENV_BIN = $(VENV)/Scripts
+else ifeq ($(findstring MSYS, $(UNAME)), MSYS)
+    VENV_BIN = $(VENV)/Scripts
+else ifeq ($(findstring CYGWIN, $(UNAME)), CYGWIN)
+    VENV_BIN = $(VENV)/Scripts
+else
+    VENV_BIN = $(VENV)/bin
+endif
+
+PYTHON = $(VENV_BIN)/python
+PIP = $(VENV_BIN)/python -m pip
+UVICORN = $(VENV_BIN)/uvicorn
+
+.PHONY: setup run kill fresh
+
+run: kill $(VENV_BIN)/fastapi
+	cd src && ../$(VENV_BIN)/fastapi dev main.py
+
+$(VENV_BIN)/fastapi: requirements.txt
+	@[ -d $(VENV) ] || "$(PYTHON311)" -m venv $(VENV)
 	$(PIP) install -r requirements.txt
-	$(PYTHON) src/solver/setup.py
 	@echo "Ready."
 
-$(VENV)/Scripts/activate:
-	python -m venv $(VENV)
-
-run: kill setup
-	cd src && ../$(VENV)/Scripts/uvicorn main:app --reload
+setup: $(VENV_BIN)/fastapi
 
 kill:
-	-taskkill /F /IM uvicorn.exe
+	-taskkill /F /IM uvicorn.exe || true
+
+fresh:
+	rm -rf $(VENV)
+	$(MAKE) setup
