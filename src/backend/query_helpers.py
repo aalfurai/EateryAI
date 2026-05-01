@@ -1,4 +1,4 @@
-from classes import NumRange
+from backend.classes import NumRange
 
 def query_selector_for_item(query: str, name: str, price_range: NumRange = None, calories_range: NumRange = None, protein_range: NumRange = None):
     params = []

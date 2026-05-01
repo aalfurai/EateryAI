@@ -1,7 +1,7 @@
 import json
 import uuid
 import time
-import db_connection as dbc
+import EateryAI.src.db.db_connection as dbc
 
 def to_numeric(value, default=None):
     if value == '' or value is None:

@@ -3,9 +3,9 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from scripts.schemas.user import User
-from scripts.schemas.constraints import Constraints
-from scripts.schemas.weights import Weights
+from src.schemas import User
+from src.schemas import Constraints
+from src.schemas import Weights
 
 
 # ── fixtures ──────────────────────────────────────────────────────────────────

@@ -1,6 +1,17 @@
 from dataclasses import dataclass, field
 
 @dataclass
+class SQLData:
+    item_id:        str
+    menu_item_id:   str
+    restaurant_id:  int
+    menu_item_name: str
+    category:       str
+    price:          float
+    golden_ratio:   float
+    ai_description: str
+
+@dataclass
 class Restaurant:
     name:          str
     menu:          dict  = field(default_factory=dict)
@@ -19,10 +30,7 @@ class Restaurant:
 
     def get_item(self, idx: int) -> dict:
         """Get a menu item by index."""
-        item = self.menu.get(idx)
-        if item is None:
-            raise KeyError(f"Item index {idx} not found in {self.name}")
-        return item
+        return self.menu.get(idx, None)
 
     def get_by_category(self, category: str) -> list:
         """Get all items for a given meal category."""
@@ -37,6 +45,32 @@ class Restaurant:
         if result is None:
             raise ValueError(f"Unknown category: {category}. Must be one of {list(category_map.keys())}")
         return result
+    
+    def to_dict(self):
+        """Convert restaurant data to JSON-serializable format."""
+        return {
+            'name': self.name,
+            'entrees': self.entrees,
+            'sides': self.sides,
+            'drinks': self.drinks,
+            'desserts': self.desserts,
+            'addons': self.addons,
+            'entree_combos': self.entree_combos
+        }
+    
+    @classmethod
+    def from_dict(cls, data: dict) -> "Restaurant":
+        # TODO: UPDATE FOR DB KEYS
+        return cls(
+            name = data['name'],
+            menu = data,
+            entrees = data.get('entrees', []),
+            sides = data.get('sides', []),
+            drinks = data.get('drinks', []),
+            desserts = data.get('desserts', []),
+            addons = data.get('addons', []),
+            entree_combos = data.get('entree_combos', [])
+        )
 
     # ── stats ─────────────────────────────────────────────────────────────────
 

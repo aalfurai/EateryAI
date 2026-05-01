@@ -31,6 +31,7 @@ class Constraints:
 
     def update(self, **kwargs):
         for key, value in kwargs.items():
+            print(f"Updating: {key} to {value}")
             if not hasattr(self, key):
                 raise ValueError(f"Unknown constraint field: {key}")
             setattr(self, key, value)
