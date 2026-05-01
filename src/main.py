@@ -1,24 +1,13 @@
 import time
-from fastapi import FastAPI, Depends, Request
+from fastapi import FastAPI, Depends, Request, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from schemas.user import User
 from schemas.requests import RecommendRequest, ConstraintsRequest, WeightsRequest, SaveMealRequest, LoginRequest, RegisterRequest
 from config.security import create_token, decode_token
 from config.dependencies import pipeline, security, data_service
 from config.db import init_pool, get_db, db_pool
-
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.middleware.cors import CORSMiddleware
-from typing import Optional
-from schemas.user import User
-from schemas.restaurant import Restaurant
-from schemas.constraints import Constraints
-from schemas.weights import Weights
-import solver.functions as solver
-from services.data import DataService
 from backend import queries
 from backend.classes import NumRange
-from db.db_connection import EateryDatabaseConnection
-
 from contextlib import asynccontextmanager
 
 
@@ -85,7 +74,6 @@ def login(req: LoginRequest):
     """
     if not data_service.check_user_exists(req.user_id):
         user = User(user_id=req.user_id, name=req.username)
-        user = User(user_id=req.user_id, name=req.name, constraints=req.constraints, weights=req.weights)
         data_service.add_user(user)
     
     token = create_token(req.user_id)
@@ -198,7 +186,6 @@ def get_menu(restaurant: str, conn=Depends(get_db)):
     items = queries.get_menu_items_by_restaurant(conn, restaurant_id)
     return {"restaurant": restaurant_name, "items": items}
 
-# NOTE: double check implementation
 @app.get("/menu/{restaurant}/category/{category}", tags=["Menu"])
 def get_menu_by_category(restaurant: str, category: str, conn=Depends(get_db)):
     """
@@ -210,24 +197,23 @@ def get_menu_by_category(restaurant: str, category: str, conn=Depends(get_db)):
             status_code=422,
             detail="Category must be one of (Entree, Side, Drink, Dessert, Add-On)"
         )
-    restaurant_id, restaurant_name = data_service._resolve_restaurant_id(conn, restaurant)
+    restaurant_id, _ = data_service._resolve_restaurant_id(conn, restaurant)
     items = queries.get_menu_items_by_category(conn, restaurant_id, category)
     return {"restaurant": restaurant, "category": category, "items": items}
 
-# NOTE: double check implementation
 @app.get("/menu/{restaurant}/{item_id}", tags=["Menu"])
-def get_restaurant_item(restaurant: str, item_id: str, conn=Depends(get_db)):
+def get_restaurant_item(restaurant_name: str, item_id: int, conn=Depends(get_db)):
     """
     Single menu item detail view.
     Corresponds to the Menu Item Name screen
     (picture, Meal Description, Nutrition Information).
     """
-    data_service._resolve_restaurant_id(conn, restaurant)  # 404 if restaurant not found
-    item = queries.get_menu_item_by_id(conn, item_id)
+    restaurant = data_service.load_restaurant(conn, restaurant_name)
+    item = restaurant.get_item(item_id)
     if not item:
         raise HTTPException(
             status_code=404,
-            detail=f"Item '{item_id}' not found in '{restaurant}'"
+            detail=f"Item '{item_id}' not found in '{restaurant.name}'"
         )
     return item
 
@@ -282,8 +268,9 @@ def recommend(req: RecommendRequest, credentials=Depends(security), conn=Depends
     """
     user_id = decode_token(credentials.credentials)
     user = data_service.load_user(user_id)
-    return {"recommendations": pipeline.recommend(conn, user, req.restaurant_name, req.seed_id, req.categories)}
+    return {"user": user.to_dict(), "recommendations": pipeline.recommend(conn, user, req.restaurant_name, req.seed_id, req.categories)}
 
+# TODO: reimplement to recommend seed items only
 # @app.post("/recommend/for-you", tags=["Recommend"])
 # def for_you_feed(user_id: str, limit: int = Query(default=10, le=50), credentials=Depends(security), conn=Depends(get_db)):
 #     """

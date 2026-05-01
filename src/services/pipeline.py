@@ -15,10 +15,7 @@ class PipelineService:
     def recommend(self, conn, user: User, restaurant_name: str, seed_id: str = None, required_categories: set[str] = None) -> list[Meal]:
         restaurant = self.data.load_restaurant(conn, restaurant_name)
         seed       = restaurant.get_item(int(seed_id)) if seed_id else None
-        # NOTE: Added user info to top of results
-        result     = [user.to_dict()]
-        result.extend(self._build_top_combos(user, restaurant, seed_item=seed, required_categories=required_categories))
-        return result
+        return self._build_top_combos(user, restaurant, seed_item=seed, required_categories=required_categories)
 
     def _build_top_combos(self, user: User, restaurant: Restaurant, seed_item: dict | None, required_categories: set[str]) -> pd.DataFrame:
         try:

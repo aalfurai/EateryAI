@@ -30,10 +30,7 @@ class Restaurant:
 
     def get_item(self, idx: int) -> dict:
         """Get a menu item by index."""
-        item = self.menu.get(idx)
-        if item is None:
-            raise KeyError(f"Item index {idx} not found in {self.name}")
-        return item
+        return self.menu.get(idx, None)
 
     def get_by_category(self, category: str) -> list:
         """Get all items for a given meal category."""
