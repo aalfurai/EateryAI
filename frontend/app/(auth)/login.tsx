@@ -1,10 +1,37 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { useUser } from "../../context/UserContext";
+import { User } from "../../types/user";
 import EatLogo from "../../assets/EatLogo";
+
+// replace with api call to user database
+const dummyUser: User = {
+  user_id: "1",
+  name: "dummyUser",
+  constraints: {
+    price: 14,
+    calories: 800,
+    protein: 20,
+    price_tol_pct: 0.2,
+    calories_tol_pct: 0.1,
+    protein_tol_pct: 0.3,
+  },
+  weights: {
+    price: 0.2,
+    calories: 0.4,
+    protein: 0.4,
+    fiber: 0,
+    sugar: 0,
+    sodium: 0,
+    drink_cal: 0,
+    addon_cal: 0,
+  },
+};
 
 export default function Login() {
   const router = useRouter();
+  const { setUser } = useUser();
 
   return (
     <LinearGradient
@@ -26,25 +53,37 @@ export default function Login() {
         {/* Demo Users */}
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.replace("/(tabs)")}
+          onPress={() => {
+            router.replace("/(tabs)");
+            setUser(dummyUser); // replace with actual user
+          }}
         >
           <Text style={styles.buttonText}>Bodybuilder</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.replace("/(tabs)")}
+          onPress={() => {
+            router.replace("/(tabs)");
+            setUser(dummyUser); // replace with actual user
+          }}
         >
           <Text style={styles.buttonText}>Budgeter</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.replace("/(tabs)")}
+          onPress={() => {
+            router.replace("/(tabs)");
+            setUser(dummyUser); // replace with actual user
+          }}
         >
           <Text style={styles.buttonText}>Dieting</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.replace("/(tabs)")}
+          onPress={() => {
+            router.replace("/(tabs)");
+            setUser(dummyUser); // replace with actual user
+          }}
         >
           <Text style={styles.buttonText}>Balanced</Text>
         </TouchableOpacity>
