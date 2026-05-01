@@ -130,10 +130,13 @@ class DataService:
                 case "Drink":   drinks.append(item)
                 case "Dessert": desserts.append(item)
                 case "Add-On":  addons.append(item)
-                # testing case
-                case "Burritos": entrees.append(item)
 
         entree_combos = DataService._calculate_entree_combos(entrees)
+        entrees = pd.DataFrame(entrees)
+        sides = pd.DataFrame(sides)
+        drinks = pd.DataFrame(drinks)
+        desserts = pd.DataFrame(desserts)
+        addons = pd.DataFrame(addons)
 
         return Restaurant(
             name=restaurant_name,

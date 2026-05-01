@@ -265,7 +265,6 @@ def build_meal(user: User, seed_id, required_categories, restaurant: Restaurant,
                                     desserts=desserts,
                                     addons=addons,
                                     is_entree=is_entree)
-        print(cand_items)
         if cand_items is None or cand_items.empty:
             continue
         
