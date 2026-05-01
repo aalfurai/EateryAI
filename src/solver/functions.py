@@ -258,17 +258,18 @@ def build_meal(user: User, seed_id, required_categories, restaurant: Restaurant,
 
     for category in ordered_missing:
         new_meals = []
+        cand_items = get_cand_items(seed_id=seed_id, category=category, 
+                                    entree_combos=entree_combos, 
+                                    sides=sides, 
+                                    drinks=drinks,
+                                    desserts=desserts,
+                                    addons=addons,
+                                    is_entree=is_entree)
+        print(cand_items)
+        if cand_items is None or cand_items.empty:
+            continue
         
         for meal in current_meals:
-            cand_items = get_cand_items(seed_id=seed_id, category=category, 
-                                        entree_combos=entree_combos, 
-                                        sides=sides, 
-                                        drinks=drinks,
-                                        desserts=desserts,
-                                        addons=addons,
-                                        is_entree=is_entree)
-            if cand_items is None or cand_items.empty:
-                continue
             cand_items = cand_items[
                 (meal.total_price + cand_items['price'] <= user.constraints.price + PRICE_TOL) &
                 (meal.total_cal + cand_items['calories'] <= user.constraints.calories + CAL_TOL)

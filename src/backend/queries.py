@@ -134,7 +134,7 @@ def get_menu_items_by_category(conn, restaurant_id: str, category: str):
 def get_menu_items_for_solver(conn, restaurant_id: str):
     """
     Fetches the minimal fields the solver needs:
-    item_id, name, category, price, calories, protein.
+    item_id, name, category, price, calories, protein, dietary fiber, sugar, sodium, cholesterol, carbohydrates, potassium, total fat, and serving size.
     Used by the recommend pipeline in place of loading from JSON.
     """
     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
@@ -145,7 +145,15 @@ def get_menu_items_for_solver(conn, restaurant_id: str):
                 m.category,
                 m.price,
                 n.calories,
-                n.protein
+                n.protein,
+                n.dietary_fiber,
+                n.sugars,
+                n.sodium,
+                n.cholesterol,
+                n.total_carbohydrates,
+                n.potassium,
+                n.total_fat,
+                n.serving_size
             FROM menu_items m
             JOIN nutrition_info n ON m.item_id = n.item_id
             WHERE m.restaurant_id = %s;

@@ -47,7 +47,6 @@ async def timer(request: Request, call_next):
     start_time = time.perf_counter()
     response = await call_next(request)
     duration = time.perf_counter() - start_time
-    print(f"{request.method} {request.url.path} — {duration * 1000:.2f}ms")
     response.headers["X-Process-Time"] = f"{duration * 1000:.2f}ms"
     return response
 
@@ -104,7 +103,6 @@ def get_user(credentials=Depends(security)):
     return data_service.load_user(user_id).to_dict()
 
 @app.patch("/user/constraints", tags=["Users"])
-
 def update_constraints(req: ConstraintsRequest, credentials=Depends(security)):
     """
     Update nutritional / budget constraints.
@@ -196,11 +194,11 @@ def get_menu(restaurant: str, conn=Depends(get_db)):
     Full menu for a restaurant (all categories + nutrition).
     Corresponds to the restaurant card tap on the Browse screen.
     """
-    restaurant_id = data_service._resolve_restaurant_id(conn, restaurant)
+    restaurant_id, restaurant_name = data_service._resolve_restaurant_id(conn, restaurant)
     items = queries.get_menu_items_by_restaurant(conn, restaurant_id)
-    return {"restaurant": restaurant, "items": items}
+    return {"restaurant": restaurant_name, "items": items}
 
-
+# NOTE: double check implementation
 @app.get("/menu/{restaurant}/category/{category}", tags=["Menu"])
 def get_menu_by_category(restaurant: str, category: str, conn=Depends(get_db)):
     """
@@ -212,10 +210,9 @@ def get_menu_by_category(restaurant: str, category: str, conn=Depends(get_db)):
             status_code=422,
             detail="Category must be one of (Entree, Side, Drink, Dessert, Add-On)"
         )
-    restaurant_id = data_service._resolve_restaurant_id(conn, restaurant)
+    restaurant_id, restaurant_name = data_service._resolve_restaurant_id(conn, restaurant)
     items = queries.get_menu_items_by_category(conn, restaurant_id, category)
     return {"restaurant": restaurant, "category": category, "items": items}
-
 
 # NOTE: double check implementation
 @app.get("/menu/{restaurant}/{item_id}", tags=["Menu"])

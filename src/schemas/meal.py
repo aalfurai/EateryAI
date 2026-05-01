@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 class Meal:
     item_ids:           list[int] = field(default_factory=list)
     Entree_ids:         list[int] = field(default_factory=list)
+    Burritos_ids:         list[int] = field(default_factory=list)
     Side_ids:           list[int] = field(default_factory=list)
     Drink_ids:          list[int] = field(default_factory=list)
     Addon_ids:          list[int] = field(default_factory=list)

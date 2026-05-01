@@ -83,7 +83,8 @@ class DataService:
         if not rows:
             raise ValueError(f"Restaurant '{restaurant_name}' not found")
         
-        restaurant_id = self._resolve_restaurant_id(conn, restaurant_name)
+        # Update restaurant name to match DB
+        restaurant_id, restaurant_name = self._resolve_restaurant_id(conn, restaurant_name)
         restaurant = self._build_solver_restaurant(conn, restaurant_id, restaurant_name)
         self._restaurant_cache[key] = restaurant
         return restaurant
@@ -93,7 +94,7 @@ class DataService:
         rows = queries.find_restaurant_by_name(conn, restaurant_name)
         if not rows:
             raise HTTPException(status_code=404, detail=f"Restaurant '{restaurant_name}' not found")
-        return rows[0]["restaurant_id"]
+        return rows[0]["restaurant_id"], rows[0]["restaurant_name"]
 
     def _build_solver_restaurant(self, conn, restaurant_id: str, restaurant_name: str) -> Restaurant:
         """
@@ -104,16 +105,23 @@ class DataService:
 
         menu = {}
         entrees, sides, drinks, desserts, addons = [], [], [], [], []
-
         for idx, row in enumerate(rows):
             item = {
                 "index":          idx,
                 "item_id":        row["item_id"],
                 "menu_item_name": row["menu_item_name"],
-                "price":          float(row["price"]),
-                "calories":       int(row["calories"] or 0),
-                "protein":        int(row["protein"] or 0),
                 "category":       row["category"],
+                "price":          float(row["price"]),
+                "calories":       int(row["calories"]),
+                "protein":        int(row["protein"]),
+                "dietary_fiber":  int(row["dietary_fiber"]),
+                "sugars":         int(row["sugars"]),
+                "sodium":         int(row["sodium"]),
+                "cholesterol":    int(row["cholesterol"]),
+                "total_carbohydrates": int(row["total_carbohydrates"]),
+                "potassium":      int(row["potassium"]),
+                "total_fat":      int(row["total_fat"]),
+                "serving_size":   row["serving_size"],
             }
             menu[idx] = item
             match item["category"]:
@@ -122,6 +130,8 @@ class DataService:
                 case "Drink":   drinks.append(item)
                 case "Dessert": desserts.append(item)
                 case "Add-On":  addons.append(item)
+                # testing case
+                case "Burritos": entrees.append(item)
 
         entree_combos = DataService._calculate_entree_combos(entrees)
 
@@ -176,19 +186,21 @@ class DataService:
         MAX_PRICE    = 100.0
         MAX_CALORIES = 3000
 
-        prices      = entrees['price'].to_numpy()
-        calories    = entrees['calories'].to_numpy()
-        proteins    = entrees['protein'].to_numpy()
-        fibers      = entrees['dietary_fiber'].to_numpy()
-        sugars      = entrees['sugars'].to_numpy()
-        sodiums     = entrees['sodium'].to_numpy()
-        cholesterol = entrees['cholesterol'].to_numpy()
-        carbs       = entrees['total_carbohydrates'].to_numpy()
-        potassium   = entrees['potassium'].to_numpy()
-        fats        = entrees['total_fat'].to_numpy()
-        indices     = entrees['index'].to_numpy()
-        names       = entrees['menu_item_name'].to_numpy()
-        sizes       = entrees['serving_size'].to_numpy()
+        entrees_df = pd.DataFrame(entrees)
+
+        prices      = entrees_df['price'].to_numpy()
+        calories    = entrees_df['calories'].to_numpy()
+        proteins    = entrees_df['protein'].to_numpy()
+        fibers      = entrees_df['dietary_fiber'].to_numpy()
+        sugars      = entrees_df['sugars'].to_numpy()
+        sodiums     = entrees_df['sodium'].to_numpy()
+        cholesterol = entrees_df['cholesterol'].to_numpy()
+        carbs       = entrees_df['total_carbohydrates'].to_numpy()
+        potassium   = entrees_df['potassium'].to_numpy()
+        fats        = entrees_df['total_fat'].to_numpy()
+        indices     = entrees_df['index'].to_numpy()
+        names       = entrees_df['menu_item_name'].to_numpy()
+        sizes       = entrees_df['serving_size'].to_numpy()
 
         entree_combos = []
         combo_id = 1
