@@ -1,11 +1,37 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { useUser } from "../../context/UserContext";
+import { User } from "../../types/user";
 import EatLogo from "../../assets/EatLogo";
+
+// replace with api call to user database
+const dummyUser: User = {
+  user_id: "1",
+  name: "dummyUser",
+  constraints: {
+    price: 14,
+    calories: 800,
+    protein: 20,
+    price_tol_pct: 0.2,
+    calories_tol_pct: 0.1,
+    protein_tol_pct: 0.3,
+  },
+  weights: {
+    price: 0.2,
+    calories: 0.4,
+    protein: 0.4,
+    fiber: 0,
+    sugar: 0,
+    sodium: 0,
+    drink_cal: 0,
+    addon_cal: 0,
+  },
+};
 
 export default function Login() {
   const router = useRouter();
+  const { setUser } = useUser();
 
   return (
     <LinearGradient
@@ -22,24 +48,46 @@ export default function Login() {
       <View style={styles.centerContent}>
         {/* Welcome text */}
         <Text style={styles.title}>Welcome</Text>
+        <Text style={styles.subtitle}>Select a demo user:</Text>
 
-        {/* Username input */}
-        <View style={styles.inputContainer}>
-          <Ionicons name="at" size={20} color="white" style={styles.icon} />
-          <TextInput
-            placeholder="Username"
-            placeholderTextColor="#ccc"
-            style={styles.input}
-          />
-        </View>
-
-        {/* Login button */}
+        {/* Demo Users */}
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.replace("/(tabs)")}
+          onPress={() => {
+            router.replace("/(tabs)");
+            setUser(dummyUser); // replace with actual user
+          }}
         >
-          <Text style={styles.buttonText}>Log In</Text>
+          <Text style={styles.buttonText}>Bodybuilder</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => {
+            router.replace("/(tabs)");
+            setUser(dummyUser); // replace with actual user
+          }}
+        >
+          <Text style={styles.buttonText}>Budgeter</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => {
+            router.replace("/(tabs)");
+            setUser(dummyUser); // replace with actual user
+          }}
+        >
+          <Text style={styles.buttonText}>Dieting</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => {
+            router.replace("/(tabs)");
+            setUser(dummyUser); // replace with actual user
+          }}
+        >
+          <Text style={styles.buttonText}>Balanced</Text>
+        </TouchableOpacity>
+
       </View>
     </LinearGradient>
   );
@@ -53,30 +101,25 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     position: "absolute",
-    top: 160,
+    top: 130,
     alignItems: "center",
   },
   centerContent: {
     position: "absolute",
-    top: 330,
-    alignItems: "center",
+    top: 260,
+    alignItems: "flex-start",
   },
   title: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: "700",
     color: "white",
-    marginBottom: 40,
+    marginBottom: 10,
   },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: 15,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    height: 65,
-    width: 340,
-    marginBottom: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.20)",
+  subtitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "white",
+    marginBottom: 30,
   },
   icon: {
     marginRight: 8,
@@ -87,18 +130,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   button: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: "white",
-    paddingVertical: 12,
-    paddingHorizontal: 40,
-    borderRadius: 50,
-    height: 65,
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 15,
+    paddingHorizontal: 25,
+    paddingVertical: 10,
+    height: 80,
     width: 340,
+    marginBottom: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.20)",
   },
   buttonText: {
-    color: "#333",
-    fontWeight: "700",
+    color: "white",
+    fontWeight: "600",
     fontSize: 18,
   },
 });
