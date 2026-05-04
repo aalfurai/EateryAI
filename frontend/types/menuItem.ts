@@ -16,4 +16,5 @@ export type MenuItem = {
   cholesterol: number;
   potassium: number;
   serving_size: string;
+  image_url: string;
 };
