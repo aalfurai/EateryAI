@@ -24,6 +24,7 @@ const PLACEHOLDER_ITEM: MenuItem = {
   cholesterol: 90,
   potassium: 430,
   serving_size: "231g",
+  image_url: "https://fastfoodnutrition.org/item-photos/400x270/5038.jpg",
 };
 
 export default function ItemDetail() {
