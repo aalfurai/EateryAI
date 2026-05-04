@@ -1,11 +1,12 @@
 import { View, ScrollView, StyleSheet, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Redirect } from "expo-router";
+import { useRouter } from "expo-router";
 import RestaurantCard from "../../components/RestaurantCard";
 import AppHeader from "../../components/AppHeader";
 
 export default function Home() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   // replace this with api call later
   const restaurants = [
@@ -36,6 +37,7 @@ export default function Home() {
               key={name}
               name={name}
               hue={hues[i % hues.length]}
+              onPress={() => router.push(`/restaurant/${name}`)}
             />
           ))}
         </View>
