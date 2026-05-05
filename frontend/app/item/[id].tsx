@@ -1,8 +1,10 @@
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { MenuItem } from "../../types/MenuItem";
+import { LinearGradient } from "expo-linear-gradient";
+import EatAILogo from "../../assets/EatAILogo";
 
 // replace with api call to GET /menu/{restaurant}/{item_id}
 const PLACEHOLDER_ITEM: MenuItem = {
@@ -35,58 +37,79 @@ export default function ItemDetail() {
 
   return (
     <View style={styles.container}>
-      {/* Image area */}
-      <View style={styles.imageArea}>
-        <TouchableOpacity
-          style={[styles.closeButton, { top: insets.top + 12 }]}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="close" size={18} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.imagePlaceholderText}>picture</Text>
+      
+      <View style={styles.restaurantHeader}>
+        <View style={styles.restaurantHeaderTag}>
+          <Text style={styles.restaurantHeaderText}>{item.restaurant_name}</Text>
+        </View>
       </View>
 
-      {/* Content sheet */}
+      <TouchableOpacity
+        style={[
+          styles.closeButton,
+          { top: insets.top },
+        ]}
+        onPress={() => router.back()}
+      >
+        <Ionicons name="close" size={18} color="white" />
+      </TouchableOpacity>
+      
       <ScrollView
         style={styles.sheet}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 150 }}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.itemName}>{item.menu_item_name}</Text>
-        <Text style={styles.restaurantLabel}>{item.restaurant_name}</Text>
-        <Text style={styles.quickStats}>
-          ${item.price.toFixed(2)}  ·  {item.calories} cal  ·  {item.protein}g protein
-        </Text>
-
-        <Text style={styles.sectionTitle}>Meal Information</Text>
-        <View style={styles.mealInfoRow}>
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>{item.category}</Text>
-          </View>
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>{item.serving_size}</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.eatAIButton}
-            onPress={() => router.push(`/eatai/${encodeURIComponent(item.restaurant_name)}`)}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.eatAIText}>eatAI</Text>
-          </TouchableOpacity>
+        {/* Image area */}
+        <View style={styles.imageArea}>
+          <Image
+            source={{ uri: item.image_url }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+          <LinearGradient
+            colors={["transparent", "rgba(0,0,0,0.6)"]}
+            style={styles.imageOverlay}
+          />
         </View>
+        
+        {/* Content sheet */}
+        <View style={styles.content}>
+          <Text style={styles.itemName}>{item.menu_item_name}</Text>
+          <Text style={styles.restaurantLabel}>{item.restaurant_name}</Text>
+          <Text style={styles.quickStats}>
+            ${item.price.toFixed(2)}  ·  {item.calories} cal  ·  {item.protein}g protein
+          </Text>
 
-        <Text style={styles.sectionTitle}>Meal Description</Text>
-        <Text style={styles.description}>{item.ai_description}</Text>
+          <Text style={styles.sectionTitle}>Meal Information</Text>
+          <View style={styles.mealInfoRow}>
+            <View style={styles.tag}>
+              <Text style={styles.tagText}>{item.category}</Text>
+            </View>
+            <View style={styles.tag}>
+              <Text style={styles.tagText}>{item.serving_size}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.eatAIButton}
+              onPress={() => router.push(`/eatai/${encodeURIComponent(item.restaurant_name)}`)}
+              activeOpacity={0.8}
+            >
+              <EatAILogo width={35} height={16} />
+            </TouchableOpacity>
+          </View>
 
-        <Text style={styles.sectionTitle}>Nutrition Information</Text>
-        <View style={styles.nutritionRow}>
-          <NutritionCell label="Carbs" value={`${item.total_carbohydrates}g`} />
-          <View style={styles.divider} />
-          <NutritionCell label="Fats" value={`${item.total_fat}g`} />
-          <View style={styles.divider} />
-          <NutritionCell label="Sugar" value={`${item.sugars}g`} />
-          <View style={styles.divider} />
-          <NutritionCell label="Sodium" value={`${item.sodium}mg`} />
+          <Text style={styles.sectionTitle}>Meal Description</Text>
+          <Text style={styles.description}>{item.ai_description}</Text>
+
+          <Text style={styles.sectionTitle}>Nutrition Information</Text>
+          <View style={styles.nutritionRow}>
+            <NutritionCell label="Carbs" value={`${item.total_carbohydrates}g`} />
+            <View style={styles.divider} />
+            <NutritionCell label="Fats" value={`${item.total_fat}g`} />
+            <View style={styles.divider} />
+            <NutritionCell label="Sugar" value={`${item.sugars}g`} />
+            <View style={styles.divider} />
+            <NutritionCell label="Sodium" value={`${item.sodium}mg`} />
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -108,28 +131,43 @@ const styles = StyleSheet.create({
     backgroundColor: "#010000",
   },
   imageArea: {
-    height: 240,
+    height: 220,
     backgroundColor: "#1a1a1a",
     justifyContent: "center",
     alignItems: "center",
+    overflow: "hidden",
+    marginTop: 105,
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+  },
+  imageOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 80,
   },
   closeButton: {
     position: "absolute",
     left: 16,
+    zIndex: 10,
+    elevation: 10,
     width: 34,
     height: 34,
     borderRadius: 17,
     backgroundColor: "rgba(0,0,0,0.5)",
+    borderColor: "rgba(161, 161, 161, 0.17)",
+    borderWidth: 1,
     justifyContent: "center",
     alignItems: "center",
-  },
-  imagePlaceholderText: {
-    color: "#555",
-    fontSize: 14,
   },
   sheet: {
     flex: 1,
     backgroundColor: "#010000",
+  },
+  content: {
     paddingHorizontal: 20,
     paddingTop: 20,
   },
@@ -218,5 +256,33 @@ const styles = StyleSheet.create({
     width: 1,
     backgroundColor: "#1e1e1e",
     marginVertical: 12,
+  },
+  restaurantHeader : {
+    position: "absolute",
+    top: 60,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    zIndex: 10,
+  },
+  restaurantHeaderTag: {
+    position: "absolute",
+    zIndex: 10,
+    elevation: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: "white",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  restaurantHeaderText: {
+    color: "#1e1e1e",
+    fontSize: 14,
+    fontWeight: 600,
   },
 });
