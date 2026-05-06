@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from backend import queries
 from schemas.user import User
 from schemas.restaurant import Restaurant
+from schemas.meal import Meal
 
 
 class DataService:
@@ -59,7 +60,7 @@ class DataService:
     def get_saved_meals(self, user_id: str) -> list:
         return self._saved_meals.get(user_id, [])
 
-    def save_meal(self, user_id: str, meal: dict) -> int:
+    def save_meal(self, user_id: str, meal: Meal) -> int:
         self._saved_meals.setdefault(user_id, []).append(meal)
         return len(self._saved_meals[user_id])
 
