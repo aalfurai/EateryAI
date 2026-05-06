@@ -1,28 +1,22 @@
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import ItemCard from "../../components/ItemCard";
+import { useMenu } from "../../hooks/useMenu";
 
-// replace with api call to GET /menu/{restaurant}
-const PLACEHOLDER_ITEMS = [
-  { item_id: "1", name: "Spicy Deluxe Sandwich", category: "Entree", price: 5.75, calories: 450, protein: 36 },
-  { item_id: "2", name: "Grilled Chicken Sandwich", category: "Entree", price: 5.29, calories: 320, protein: 32 },
-  { item_id: "3", name: "Chicken Nuggets (8ct)", category: "Entree", price: 4.45, calories: 260, protein: 26 },
-  { item_id: "4", name: "Waffle Potato Fries", category: "Side", price: 2.89, calories: 420, protein: 5 },
-  { item_id: "5", name: "Mac & Cheese", category: "Side", price: 3.29, calories: 440, protein: 12 },
-  { item_id: "6", name: "Side Salad", category: "Side", price: 2.69, calories: 80, protein: 5 },
-  { item_id: "7", name: "Lemonade", category: "Drink", price: 2.49, calories: 170, protein: 0 },
-  { item_id: "8", name: "Sweet Tea", category: "Drink", price: 2.19, calories: 120, protein: 0 },
-  { item_id: "9", name: "Chocolate Milkshake", category: "Drink", price: 3.89, calories: 580, protein: 13 },
-];
 
-const CATEGORIES = ["Entree", "Side", "Drink"];
+const CATEGORIES = ["Entree", "Side", "Drink", "Add-On", "Dessert"];
 
 export default function RestaurantMenu() {
   const { name } = useLocalSearchParams<{ name: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  const { items, loading, error } = useMenu(name);
+
+  if (loading) return <ActivityIndicator />;
+  if (error) return <Text>Failed to load menu.</Text>;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -51,19 +45,19 @@ export default function RestaurantMenu() {
         </TouchableOpacity>
 
         {CATEGORIES.map((category) => {
-          const items = PLACEHOLDER_ITEMS.filter((i) => i.category === category);
+          const restaurant_items = items.filter((i) => i.category === category);
           return (
             <View key={category}>
               <Text style={styles.categoryHeader}>{category}</Text>
-              {items.map((item) => (
+              {restaurant_items.map((item) => (
                 <ItemCard
                   key={item.item_id}
-                  name={item.name}
+                  name={item.menu_item_name}
                   category={item.category}
                   price={item.price}
                   calories={item.calories}
                   protein={item.protein}
-                  onPress={() => router.push(`/item/${item.item_id}`)}
+                  onPress={() => router.push(`/item/${name}/${item.index}`)}
                 />
               ))}
             </View>

@@ -1,46 +1,29 @@
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image } from "react-native";
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { MenuItem } from "../../types/MenuItem";
 import { LinearGradient } from "expo-linear-gradient";
-import EatAILogo from "../../assets/EatAILogo";
+import EatAILogo from "../../../assets/EatAILogo";
+import { useItem } from "../../../hooks/useItem";
 
-// replace with api call to GET /menu/{restaurant}/{item_id}
-const PLACEHOLDER_ITEM: MenuItem = {
-  item_id: "1",
-  menu_item_name: "Spicy Deluxe Sandwich",
-  category: "Entree",
-  price: 5.75,
-  golden_ratio: 0.82,
-  ai_description:
-    "A perfectly seasoned spicy chicken breast nestled between a toasted brioche bun with crisp pickles and creamy coleslaw. High protein with a moderate calorie count makes this a solid choice for your macros.",
-  restaurant_name: "Chick-Fil-A",
-  calories: 450,
-  protein: 36,
-  total_fat: 17,
-  total_carbohydrates: 41,
-  dietary_fiber: 2,
-  sugars: 8,
-  sodium: 1220,
-  cholesterol: 90,
-  potassium: 430,
-  serving_size: "231g",
-  image_url: "https://fastfoodnutrition.org/item-photos/400x270/5038.jpg",
-};
 
 export default function ItemDetail() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { restaurant, id } = useLocalSearchParams<{ restaurant: string, id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const item = PLACEHOLDER_ITEM;
+
+  const { item, loading, error } = useItem(restaurant, id);
+  console.log("item:", item);
+
+  if (loading) return <ActivityIndicator />;
+  if (error) return <Text>Failed to load item.</Text>;
 
   return (
     <View style={styles.container}>
       
       <View style={styles.restaurantHeader}>
         <View style={styles.restaurantHeaderTag}>
-          <Text style={styles.restaurantHeaderText}>{item.restaurant_name}</Text>
+          <Text style={styles.restaurantHeaderText}>{restaurant}</Text>
         </View>
       </View>
 
@@ -62,7 +45,7 @@ export default function ItemDetail() {
         {/* Image area */}
         <View style={styles.imageArea}>
           <Image
-            source={{ uri: item.image_url }}
+            source={{ uri: item?.image_url }}
             style={styles.image}
             resizeMode="cover"
           />
@@ -74,23 +57,24 @@ export default function ItemDetail() {
         
         {/* Content sheet */}
         <View style={styles.content}>
-          <Text style={styles.itemName}>{item.menu_item_name}</Text>
-          <Text style={styles.restaurantLabel}>{item.restaurant_name}</Text>
+          <Text style={styles.itemName}>{item?.menu_item_name}</Text>
+          <Text style={styles.restaurantLabel}>{restaurant}</Text>
           <Text style={styles.quickStats}>
-            ${item.price.toFixed(2)}  ·  {item.calories} cal  ·  {item.protein}g protein
+            {item?.price !== undefined ? `$${item.price.toFixed(2)}` : ""}  ·  {item?.calories} cal  ·  {item?.protein}g protein
+       
           </Text>
 
           <Text style={styles.sectionTitle}>Meal Information</Text>
           <View style={styles.mealInfoRow}>
             <View style={styles.tag}>
-              <Text style={styles.tagText}>{item.category}</Text>
+              <Text style={styles.tagText}>{item?.category}</Text>
             </View>
             <View style={styles.tag}>
-              <Text style={styles.tagText}>{item.serving_size}</Text>
+              <Text style={styles.tagText}>{item?.serving_size}</Text>
             </View>
             <TouchableOpacity
               style={styles.eatAIButton}
-              onPress={() => router.push(`/eatai/${encodeURIComponent(item.restaurant_name)}`)}
+              onPress={() => router.push(`/eatai/${encodeURIComponent(restaurant)}`)}
               activeOpacity={0.8}
             >
               <EatAILogo width={35} height={16} />
@@ -98,17 +82,21 @@ export default function ItemDetail() {
           </View>
 
           <Text style={styles.sectionTitle}>Meal Description</Text>
-          <Text style={styles.description}>{item.ai_description}</Text>
+          <Text style={styles.description}>{item?.ai_description}</Text>
 
           <Text style={styles.sectionTitle}>Nutrition Information</Text>
           <View style={styles.nutritionRow}>
-            <NutritionCell label="Carbs" value={`${item.total_carbohydrates}g`} />
+            <NutritionCell label="Carbs" value={`${item?.total_carbohydrates}g`} />
             <View style={styles.divider} />
-            <NutritionCell label="Fats" value={`${item.total_fat}g`} />
+            <NutritionCell label="Fats" value={`${item?.total_fat}g`} />
             <View style={styles.divider} />
-            <NutritionCell label="Sugar" value={`${item.sugars}g`} />
+            <NutritionCell label="Sugar" value={`${item?.sugars}g`} />
             <View style={styles.divider} />
-            <NutritionCell label="Sodium" value={`${item.sodium}mg`} />
+            <NutritionCell label="Sodium" value={`${item?.sodium}mg`} />
+            <View style={styles.divider} />
+            <NutritionCell label="Cholesterol" value={`${item?.cholesterol}mg`} />
+            <View style={styles.divider} />
+            <NutritionCell label="Potassium" value={`${item?.potassium}mg`} />
           </View>
         </View>
       </ScrollView>

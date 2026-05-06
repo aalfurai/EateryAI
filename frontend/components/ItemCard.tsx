@@ -9,11 +9,23 @@ type Props = {
   onPress?: () => void;
 };
 
+const CATEGORY_COLORS: Record<string, string> = {
+  Entree: "#39ff14",     // Neon green
+  Side: "#ffd600",       // Bright neon yellow
+  Drink: "#ff2975",      // Neon hot pink/red
+  "Add-On": "#00eaff",   // Bright neon blue-cyan
+  Dessert: "#d500f9",    // Neon purple
+};
+
+function categoryColor(category: string): string {
+  return CATEGORY_COLORS[category] ?? "#898989";
+}
+
 export default function ItemCard({ name, category, price, calories, protein, onPress }: Props) {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.info}>
-        <Text style={styles.category}>{category}</Text>
+        <Text style={[styles.category, { color: categoryColor(category) }]}>{category}</Text>
         <Text style={styles.name} numberOfLines={2}>{name}</Text>
         <Text style={styles.stats}>
           ${price.toFixed(2)}  ·  {calories} cal  ·  {protein}g protein
@@ -41,7 +53,6 @@ const styles = StyleSheet.create({
     marginRight: 14,
   },
   category: {
-    color: "#7ddf7d",
     fontSize: 11,
     fontWeight: "600",
     textTransform: "uppercase",
