@@ -5,7 +5,8 @@ from schemas.user import User
 from schemas.requests import RecommendRequest, ConstraintsRequest, WeightsRequest, SaveMealRequest, LoginRequest, RegisterRequest
 from config.security import create_token, decode_token
 from config.dependencies import pipeline, security, data_service
-from config.db import init_pool, get_db, db_pool
+import config.db as db
+from config.db import init_pool, get_db
 from backend import queries
 from backend.classes import NumRange
 from contextlib import asynccontextmanager
@@ -19,13 +20,19 @@ from contextlib import asynccontextmanager
 async def lifespan(app: FastAPI):
     init_pool()
     yield
-    db_pool.closeall()
+    # Must use db.db_pool: `from config.db import db_pool` captures None at import time and never updates.
+    if db.db_pool is not None:
+        db.db_pool.closeall()
 
 app = FastAPI(title="EatAI API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http:localhost:3000"], #NOTE: Add frontend url
+    # Browser-only (Expo web). Native Expo fetch does not use CORS. Origins must be scheme://host:port with no trailing slash.
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:8081",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -202,13 +209,13 @@ def get_menu_by_category(restaurant: str, category: str, conn=Depends(get_db)):
     return {"restaurant": restaurant, "category": category, "items": items}
 
 @app.get("/menu/{restaurant}/{item_id}", tags=["Menu"])
-def get_restaurant_item(restaurant_name: str, item_id: int, conn=Depends(get_db)):
+def get_restaurant_item(restaurant: str, item_id: int, conn=Depends(get_db)):
     """
     Single menu item detail view.
     Corresponds to the Menu Item Name screen
     (picture, Meal Description, Nutrition Information).
     """
-    restaurant = data_service.load_restaurant(conn, restaurant_name)
+    restaurant = data_service.load_restaurant(conn, restaurant)
     item = restaurant.get_item(item_id)
     if not item:
         raise HTTPException(
@@ -312,3 +319,10 @@ def recommend(req: RecommendRequest, credentials=Depends(security), conn=Depends
 #             continue  # skip restaurants with missing/incomplete data
 
 #     return {"feed": feed, "count": len(feed)}
+
+
+
+
+# click meal - weak
+# log meal - strong
+    # need meal info

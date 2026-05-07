@@ -20,7 +20,7 @@ UVICORN = $(VENV_BIN)/uvicorn
 .PHONY: setup run kill fresh
 
 run: kill $(VENV_BIN)/fastapi
-	cd src && ../$(VENV_BIN)/fastapi dev main.py
+	cd src && ../$(VENV_BIN)/fastapi dev main.py --host 0.0.0.0 --port 8000
 
 $(VENV_BIN)/fastapi: requirements.txt
 	@[ -d $(VENV) ] || "$(PYTHON311)" -m venv $(VENV)

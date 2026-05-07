@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from schemas.constraints import Constraints
 from schemas.weights import Weights
+from schemas.meal import Meal
     
 class LoginRequest(BaseModel):
     username: str
@@ -36,4 +37,4 @@ class WeightsRequest(BaseModel):
     addon_cal: float | None = None
 
 class SaveMealRequest(BaseModel):
-    meal: dict
+    meal: Meal
