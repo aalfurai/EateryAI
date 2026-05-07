@@ -4,8 +4,9 @@ import { useRouter } from "expo-router";
 import { useUser } from "../../context/UserContext";
 import { User } from "../../types/user";
 import EatLogo from "../../assets/EatLogo";
+import Octicons from '@expo/vector-icons/Octicons';
 
-// replace with api call to user database
+// TODO: UPDATE USER LOGIC
 const dummyUser: User = {
   user_id: "1",
   name: "dummyUser",
@@ -31,7 +32,6 @@ const dummyUser: User = {
 
 export default function Login() {
   const router = useRouter();
-  const { setUser } = useUser();
 
   return (
     <LinearGradient
@@ -48,14 +48,18 @@ export default function Login() {
       <View style={styles.centerContent}>
         {/* Welcome text */}
         <Text style={styles.title}>Welcome</Text>
-        <Text style={styles.subtitle}>Select a demo user:</Text>
+        <View style={styles.subtitleContainer}>
+          <Text style={styles.subtitle}>Select your preferred goal</Text>
+          <Octicons name="goal" size={24} color="white" />
+        </View>
+        
 
         {/* Demo Users */}
         <TouchableOpacity
           style={styles.button}
           onPress={() => {
             router.replace("/(tabs)");
-            setUser(dummyUser); // replace with actual user
+            // TODO: load new weights
           }}
         >
           <Text style={styles.buttonText}>Bodybuilder</Text>
@@ -64,7 +68,7 @@ export default function Login() {
           style={styles.button}
           onPress={() => {
             router.replace("/(tabs)");
-            setUser(dummyUser); // replace with actual user
+            // TODO: load new weights
           }}
         >
           <Text style={styles.buttonText}>Budgeter</Text>
@@ -73,7 +77,7 @@ export default function Login() {
           style={styles.button}
           onPress={() => {
             router.replace("/(tabs)");
-            setUser(dummyUser); // replace with actual user
+            // TODO: load new weights
           }}
         >
           <Text style={styles.buttonText}>Dieting</Text>
@@ -82,7 +86,7 @@ export default function Login() {
           style={styles.button}
           onPress={() => {
             router.replace("/(tabs)");
-            setUser(dummyUser); // replace with actual user
+            // TODO: load new weights
           }}
         >
           <Text style={styles.buttonText}>Balanced</Text>
@@ -119,6 +123,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "600",
     color: "white",
+    paddingRight: 8,
+  },
+  subtitleContainer: {
+    flexDirection: "row",
     marginBottom: 30,
   },
   icon: {
