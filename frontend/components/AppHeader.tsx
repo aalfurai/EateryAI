@@ -5,7 +5,11 @@ import { useRouter } from "expo-router";
 import EatLogo from "../assets/EatLogo";
 import Octicons from '@expo/vector-icons/Octicons';
 
-export default function AppHeader() {
+type Props = {
+  onPressFilters?: () => void;
+};
+
+export default function AppHeader({ onPressFilters, }:Props) {
   const router = useRouter();
 
   return (
@@ -25,7 +29,10 @@ export default function AppHeader() {
 
       {/* Right side */}
       <View style={styles.rightContainer}>
-        <TouchableOpacity style={styles.iconButton}>
+        <TouchableOpacity 
+          style={styles.iconButton}
+          onPress={onPressFilters}
+        >
           <Ionicons name="options-outline" size={28} color="white" />
         </TouchableOpacity>
 
