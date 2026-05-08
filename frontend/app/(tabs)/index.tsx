@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import RestaurantCard from "../../components/RestaurantCard";
 import AppHeader from "../../components/AppHeader";
-import FilterModal from "../../components/FilterModal";
+import FilterModal from "../../components/TargetModal";
 
 export default function Home() {
   const insets = useSafeAreaInsets();

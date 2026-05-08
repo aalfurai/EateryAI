@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import { MenuItem } from "../../types/MenuItem";
 import AppHeader from "../../components/AppHeader";
 import DiscoverItemCard from "../../components/DiscoverItemCard";
-import FilterModal from "../../components/FilterModal";
+import FilterModal from "../../components/TargetModal";
 
 const mockItems: MenuItem[] = [
   {
