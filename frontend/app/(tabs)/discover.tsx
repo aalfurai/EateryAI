@@ -1,9 +1,11 @@
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useState } from "react";
 import { useRouter } from "expo-router";
 import { MenuItem } from "../../types/MenuItem";
 import AppHeader from "../../components/AppHeader";
 import DiscoverItemCard from "../../components/DiscoverItemCard";
+import FilterModal from "../../components/TargetModal";
 
 const mockItems: MenuItem[] = [
   {
@@ -72,12 +74,17 @@ const mockItems: MenuItem[] = [
 export default function Discover() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [filtersVisible, setFiltersVisible] = useState(false);
 
   const hues = [0, 130, 220, 30, 300]; 
 
   return (
     <View style={styles.container}>
-      <AppHeader />
+      <AppHeader onPressFilters={() => setFiltersVisible(true)}/>
+      <FilterModal
+        visible={filtersVisible}
+        onClose={() => setFiltersVisible(false)}/>
+        
       <Text style={styles.title}>For You</Text>
       <ScrollView 
         contentContainerStyle={{

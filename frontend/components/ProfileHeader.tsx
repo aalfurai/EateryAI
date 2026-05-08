@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import EatLogo from "../assets/EatLogo";
+import Octicons from '@expo/vector-icons/Octicons';
 
 export default function ProfileHeader({ username="User" }) {
   const router = useRouter();
@@ -16,10 +17,10 @@ export default function ProfileHeader({ username="User" }) {
           </View>
 
           <TouchableOpacity
-            style={styles.logoutButton}
+            style={styles.goalsButton}
             onPress={() => router.replace("/(auth)/login")}
           >
-            <Ionicons name="log-out-outline" size={26} color="white" />
+            <Octicons name="goal" size={24} color="white" />
           </TouchableOpacity>
         </View>
 
@@ -49,10 +50,9 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: "center",
   },
-  logoutButton: {
+  goalsButton: {
     position: "absolute",
-    right: 0,
-    padding: 4,
+    left: 0,
   },
   userContainer: {
     flexDirection: "row",

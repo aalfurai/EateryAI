@@ -39,7 +39,7 @@ export default function ItemDetail() {
       
       <ScrollView
         style={styles.sheet}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 150 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 200 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Image area */}
