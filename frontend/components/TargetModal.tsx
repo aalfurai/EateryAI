@@ -1,6 +1,8 @@
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Animated, Pressable, } from "react-native";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
+import { useUser } from "../context/UserContext";
+import TargetSlider from "./TargetSlider";
 
 type Props = {
   visible: boolean;
@@ -8,6 +10,20 @@ type Props = {
 };
 
 export default function TargetModal({ visible, onClose, }: Props) {
+  const { user, updateConstraints } = useUser();
+  const [draftPrice, setDraftPrice] = useState(0);
+  const [draftCalories, setDraftCalories] = useState(0);
+  const [draftProtein, setDraftProtein] = useState(0);
+  const handleApply = () => {
+    updateConstraints({
+      price: draftPrice,
+      calories: draftCalories,
+      protein: draftProtein,
+    });
+
+    onClose();
+  };
+
   const slideAnim = useRef(new Animated.Value(400)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -16,6 +32,12 @@ export default function TargetModal({ visible, onClose, }: Props) {
     fadeAnim.setValue(0);
 
     if (visible) {
+      if (user) {
+        setDraftPrice(user.constraints.price);
+        setDraftCalories(user.constraints.calories);
+        setDraftProtein(user.constraints.protein);
+      }
+
       // sliding up
       Animated.parallel([
         Animated.timing(slideAnim, {
@@ -45,7 +67,7 @@ export default function TargetModal({ visible, onClose, }: Props) {
         }),
       ]).start();
     }
-  }, [visible]);
+  }, [visible, user]);
 
   return (
     <Modal
@@ -81,10 +103,40 @@ export default function TargetModal({ visible, onClose, }: Props) {
         >
           <Text style={styles.title}>Meal Targets</Text>
 
-          {/* Filter sections */}
-          <View style={styles.priceContainer} />
-          <View style={styles.calorieContainer} />
-          <View style={styles.proteinContainer} />
+          {/* Slider sections */}
+          <View style={styles.priceContainer}>
+            <TargetSlider
+              label="Price"
+              value={draftPrice}
+              min={0}
+              max={100}
+              step={0.5}
+              format={(v) => `$${v}`}
+              onChange={setDraftPrice}
+            />
+          </View>
+          <View style={styles.calorieContainer}>
+            <TargetSlider
+              label="Calories"
+              value={draftCalories}
+            min={0}
+            max={3000}
+            step={1}
+            format={(v) => `${v} cal`}
+            onChange={setDraftCalories}
+          />
+          </View>
+          <View style={styles.proteinContainer}>
+            <TargetSlider
+              label="Protein"
+              value={draftProtein}
+              min={0}
+              max={150}
+            step={1}
+            format={(v) => `${v} g`}
+            onChange={setDraftProtein}
+          />
+          </View>
 
           {/* Buttons */}
           <View style={styles.buttonsContainer}>
@@ -98,7 +150,7 @@ export default function TargetModal({ visible, onClose, }: Props) {
               </LinearGradient>
             </TouchableOpacity>
 
-            <TouchableOpacity>
+            <TouchableOpacity onPress={handleApply}>
               <LinearGradient
                 colors={["#4F4F4F", "#303030"]}
                 style={styles.applyButton}
