@@ -16,7 +16,7 @@ export default function RestaurantMenu() {
   const { items, loading, error } = useMenu(name);
 
   if (loading) return <ActivityIndicator />;
-  if (error) return <Text>Failed to load menu.</Text>;
+  if (error) return <Text style={{ color: "white", }}>Failed to load menu.</Text>;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>

@@ -16,7 +16,7 @@ export default function ItemDetail() {
   console.log("item:", item);
 
   if (loading) return <ActivityIndicator />;
-  if (error) return <Text>Failed to load item.</Text>;
+  if (error) return <Text style={{ color: "white", }}>Failed to load item.</Text>;
 
   return (
     <View style={styles.container}>
