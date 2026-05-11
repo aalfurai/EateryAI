@@ -9,7 +9,8 @@ class Constraints:
     
     # Tolerances: not sure if these will change
     price_tol_pct: float = 0.20
-    calories_tol_pct: float = 0.10
+    cal_sur_tol_pct: float = 0.10
+    cal_def_tol_pct: float = 0.05
     protein_tol_pct: float = 0.30
 
     def __post_init__(self):
@@ -24,7 +25,7 @@ class Constraints:
             raise ValueError("Protein must be positive")
         if not (0 < self.price_tol_pct < 1):
             raise ValueError("Price tolerance must be between 0 and 1")
-        if not (0 < self.calories_tol_pct < 1):
+        if not ((0 < self.cal_sur_tol_pct < 1) and (0 < self.cal_def_tol_prct < 1)):
             raise ValueError("Calorie tolerance must be between 0 and 1")
         if not (0 < self.protein_tol_pct < 1):
             raise ValueError("Protein tolerance must be between 0 and 1")
@@ -42,7 +43,7 @@ class Constraints:
 
     @property
     def get_calories(self) -> int:
-        return math.ceil(self.calories * self.calories_tol_pct)
+        return math.ceil(self.calories * self.cal_sur_tol_pct)
 
     @property
     def get_protein(self) -> int:
@@ -55,7 +56,8 @@ class Constraints:
             "calories": self.calories,
             "protein": self.protein,
             "price_tol_pct": self.price_tol_pct,
-            "calories_tol_pct": self.calories_tol_pct,
+            "cal_sur_tol_pct": self.cal_sur_tol_pct,
+            "cal_def_tol_pct": self.cal_def_tol_pct,
             "protein_tol_pct": self.protein_tol_pct,
         }
 
@@ -66,6 +68,7 @@ class Constraints:
             calories=data["calories"],
             protein=data["protein"],
             price_tol_pct=data.get("price_tol_pct", 0.20),
-            calories_tol_pct=data.get("calories_tol_pct", 0.10),
+            cal_sur_tol_pct=data.get("cal_sur_tol_pct", 0.10),
+            cal_def_tol_pct=data.get("cal_def_tol_prct", 0.05),
             protein_tol_pct=data.get("protein_tol_pct", 0.30),
         )
