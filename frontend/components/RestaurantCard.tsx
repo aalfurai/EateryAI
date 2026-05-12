@@ -1,8 +1,9 @@
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { Restaurant } from "../api/restaurant";
 
 type Props = {
-  name: string;
+  restaurant: Restaurant;
   hue: number;
   onPress?: () => void;
 };
@@ -22,9 +23,8 @@ function getCardColors(hue: number) {
   };
 }
 
-export default function RestaurantCard({ name, hue, onPress }: Props) {
-  const formatted = formatNameForUrl(name);
-  const imageUrl = `https://fastfoodnutrition.org/logos/${formatted}.jpg`;
+export default function RestaurantCard({ restaurant, hue, onPress }: Props) {
+  const { restaurant_name, menu_card_image } = restaurant;
 
   const colors = getCardColors(hue);
 
@@ -44,11 +44,11 @@ export default function RestaurantCard({ name, hue, onPress }: Props) {
           end={{ x: 1, y: 0.5 }}    // right
           style={styles.card}
         >
-          <Text style={styles.name}>{name}</Text>
+          <Text style={styles.name}>{restaurant_name}</Text>
 
           <View style={styles.logoContainer}>
             <Image
-              source={{ uri: imageUrl }}
+              source={{ uri: menu_card_image }}
               style={styles.logo}
               resizeMode="contain"
             />
