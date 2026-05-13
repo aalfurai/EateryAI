@@ -8,3 +8,6 @@ export type Restaurant = {
 
 export const getRestaurants = () => 
   apiFetch<Restaurant[]>(`/restaurants`);
+
+export const searchRestaurants = (query: string) =>
+  apiFetch<Restaurant[]>(`/restaurants/search?name=${encodeURIComponent(query)}`);

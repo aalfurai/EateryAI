@@ -3,17 +3,28 @@ import { useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useRestaurants } from "../../hooks/useRestaurants";
+import { useRestaurantSearch } from "../../hooks/useRestaurantSearch";
 import RestaurantCard from "../../components/RestaurantCard";
 import AppHeader from "../../components/AppHeader";
-import FilterModal from "../../components/TargetModal";
+import TargetModal from "../../components/TargetModal";
+import SearchModal from "../../components/SearchModal";
 
 export default function Home() {
-  const { restaurants, loading, error } = useRestaurants();
-
   const insets = useSafeAreaInsets();
   const router = useRouter();
+
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const { restaurants, loading, error } = useRestaurants();
+  const {
+    results: searchResults,
+    loading: searchLoading,
+    error: searchError,
+  } = useRestaurantSearch(searchQuery);
 
   const defaultRestaurants = [
     "Chick-fil-A",
@@ -23,12 +34,17 @@ export default function Home() {
     "McDonald's",
     "Arby's",
   ];
+
   const featuredRestaurants = restaurants.filter((restaurant) =>
     defaultRestaurants.includes(restaurant.restaurant_name)
   );
-  const displayedRestaurants = showAll
-    ? restaurants
-    : featuredRestaurants;
+
+  const isSearching = searchQuery.trim().length > 0;
+  const displayedRestaurants = isSearching
+    ? searchResults
+    : showAll
+      ? restaurants
+      : featuredRestaurants;
   
   const hues = [0, 130, 220, 30, 300]; 
   
@@ -37,10 +53,23 @@ export default function Home() {
   
   return (
     <View style={styles.container}>
-      <AppHeader onPressFilters={() => setFiltersVisible(true)}/>
-      <FilterModal
+      <AppHeader 
+        onPressFilters={() => setFiltersVisible(true)}
+        onPressSearch={() => setSearchVisible(true)}
+      />
+      <TargetModal
         visible={filtersVisible}
         onClose={() => setFiltersVisible(false)}/>
+      <SearchModal
+        visible={searchVisible}
+        onClose={() => setSearchVisible(false)}
+        value={searchInput}
+        onChange={setSearchInput}
+        onSubmit={() => {
+          setSearchQuery(searchInput);
+          setSearchVisible(false);
+        }}
+      />
 
       <ScrollView
         contentContainerStyle={{
@@ -62,14 +91,52 @@ export default function Home() {
               })}
             />
           ))}
-          {!showAll && (
-          <TouchableOpacity
-            style={styles.loadMoreButton}
-            onPress={() => setShowAll(true)}
-          >
-            <Text style={styles.loadMoreText}>View All Restaurants</Text>
-          </TouchableOpacity>
-        )}
+          {searchLoading && (
+            <ActivityIndicator style={{ marginTop: 20 }} />
+          )}
+          {isSearching && displayedRestaurants.length === 0 && !searchLoading && (
+            <Text style={styles.emptyText}>No restaurants found.</Text>
+          )}
+          {isSearching ? (
+            <View style={styles.centerButtonContainer}>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => {
+                  setSearchInput("");
+                  setSearchQuery("");
+                  setShowAll(false);
+                }}
+              >
+                <Text style={styles.buttonText}>Back to Featured</Text>
+              </TouchableOpacity>
+            </View>
+
+          ) : !showAll ? (
+
+            <View style={styles.centerButtonContainer}>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => setShowAll(true)}
+              >
+                <Text style={styles.buttonText}>View All Restaurants</Text>
+              </TouchableOpacity>
+            </View>
+
+          ) : (
+
+            <View style={styles.centerButtonContainer}>
+              <TouchableOpacity
+                onPress={() => {
+                setSearchInput("");
+                setSearchQuery("");
+                setShowAll(false);
+              }}
+              >
+                <Text style={styles.buttonText}>Back to Featured</Text>
+              </TouchableOpacity>
+            </View>
+
+          )}
         </View>
       </ScrollView>
     </View>
@@ -89,21 +156,27 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 8,
   },
-  loadMoreButton: {
-    backgroundColor: "#303030",
+  centerButtonContainer: { 
+    alignItems: "center", 
+    marginTop: 16,
+  },
+  button: {
     borderColor: "#7C7C7C",
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: 25,
     alignItems: "center",
     justifyContent: "center",
-    width: 180,
-    height: 40,
-    marginTop: 16,
-    marginLeft: 16,
+    width: 200,
+    height: 50,
   },
-  loadMoreText: {
+  buttonText: {
     color: "white",
-    fontSize: 14,
-    fontWeight: "400",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  emptyText: {
+    color: "white",
+    fontSize: 16,
+    textAlign: "center",
   },
 });

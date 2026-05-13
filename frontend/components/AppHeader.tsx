@@ -7,9 +7,10 @@ import Octicons from '@expo/vector-icons/Octicons';
 
 type Props = {
   onPressFilters?: () => void;
+  onPressSearch?: () => void;
 };
 
-export default function AppHeader({ onPressFilters, }:Props) {
+export default function AppHeader({ onPressFilters, onPressSearch }:Props) {
   const router = useRouter();
 
   return (
@@ -36,7 +37,10 @@ export default function AppHeader({ onPressFilters, }:Props) {
           <Ionicons name="options-outline" size={28} color="white" />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.iconButton}>
+        <TouchableOpacity 
+          style={styles.iconButton}
+          onPress={onPressSearch}
+        >
           <Ionicons name="search-outline" size={28} color="white" />
         </TouchableOpacity>
       </View>
