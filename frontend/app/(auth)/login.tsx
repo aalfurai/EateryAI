@@ -3,13 +3,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useUser } from "../../context/UserContext";
 import { defaultUser } from "../../data/defaultUser";
+import { weightPresets } from "../../data/weightPresets";
 import EatLogo from "../../assets/EatLogo";
 import Octicons from '@expo/vector-icons/Octicons';
 
 export default function Login() {
   const { setUser } = useUser();
-  setUser(defaultUser); // Set default user on login for demo purposes
-  
   const router = useRouter();
 
   return (
@@ -37,8 +36,12 @@ export default function Login() {
         <TouchableOpacity
           style={styles.button}
           onPress={() => {
+            setUser({
+              ...defaultUser,
+              weights: weightPresets.bodybuilder,
+            });
+
             router.replace("/(tabs)");
-            // TODO: load new weights
           }}
         >
           <Text style={styles.buttonText}>Bodybuilder</Text>
@@ -46,8 +49,12 @@ export default function Login() {
         <TouchableOpacity
           style={styles.button}
           onPress={() => {
+            setUser({
+              ...defaultUser,
+              weights: weightPresets.budgeter,
+            });
+
             router.replace("/(tabs)");
-            // TODO: load new weights
           }}
         >
           <Text style={styles.buttonText}>Budgeter</Text>
@@ -55,8 +62,12 @@ export default function Login() {
         <TouchableOpacity
           style={styles.button}
           onPress={() => {
+            setUser({
+              ...defaultUser,
+              weights: weightPresets.dieting,
+            });
+
             router.replace("/(tabs)");
-            // TODO: load new weights
           }}
         >
           <Text style={styles.buttonText}>Dieting</Text>
@@ -64,8 +75,12 @@ export default function Login() {
         <TouchableOpacity
           style={styles.button}
           onPress={() => {
+            setUser({
+              ...defaultUser,
+              weights: weightPresets.balanced,
+            });
+
             router.replace("/(tabs)");
-            // TODO: load new weights
           }}
         >
           <Text style={styles.buttonText}>Balanced</Text>
