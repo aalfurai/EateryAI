@@ -6,14 +6,14 @@ import ItemCard from "../../components/ItemCard";
 import { useMenu } from "../../hooks/useMenu";
 
 
-const CATEGORIES = ["Entree", "Side", "Drink", "Add-On", "Dessert"];
-
 export default function RestaurantMenu() {
   const { name } = useLocalSearchParams<{ name: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
   const { items, loading, error } = useMenu(name);
+
+  const categories = [...new Set(items.map((i) => i.category))];
 
   if (loading) return <ActivityIndicator />;
   if (error) return <Text style={{ color: "white", }}>Failed to load menu.</Text>;
@@ -44,7 +44,7 @@ export default function RestaurantMenu() {
           <Ionicons name="chevron-forward" size={20} color="white" />
         </TouchableOpacity>
 
-        {CATEGORIES.map((category) => {
+        {categories.map((category) => {
           const restaurant_items = items.filter((i) => i.category === category);
           return (
             <View key={category}>
@@ -57,7 +57,7 @@ export default function RestaurantMenu() {
                   price={item.price}
                   calories={item.calories}
                   protein={item.protein}
-                  onPress={() => router.push(`/item/${name}/${item.index}`)}
+                  onPress={() => router.push(`/item/${encodeURIComponent(name)}/${encodeURIComponent(item.item_id)}`)}
                 />
               ))}
             </View>
