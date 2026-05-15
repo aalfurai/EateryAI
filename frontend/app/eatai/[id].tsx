@@ -1,6 +1,6 @@
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  TextInput, KeyboardAvoidingView, Platform, ActivityIndicator,
+  TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Image
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -16,6 +16,7 @@ import { getRecommendations } from "../../api/recommend";
 import { getItem } from "../../api/item";
 import { Meal } from "../../types/Meal";
 import { MenuItem } from "../../api/menu";
+import { getRestaurantImageURL } from "../../utils/imageURLs";
 
 type Pill = {
   id: string;
@@ -111,6 +112,7 @@ const pillStyles = StyleSheet.create({
 export default function EatAI() {
   const { id, seed } = useLocalSearchParams<{ id: string; seed?: string }>();
   const restaurantName = decodeURIComponent(id);
+  const imageURL = getRestaurantImageURL(restaurantName);
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { token, user } = useUser();
@@ -196,7 +198,13 @@ export default function EatAI() {
                         ${seedItem.price.toFixed(2)}  ·  {seedItem.calories} cal  ·  {seedItem.protein}g protein
                       </Text>
                     </View>
-                    <View style={styles.seedImagePlaceholder} />
+                    <View style={styles.seedImagePlaceholder}>
+                      <Image
+                        source={{ uri: imageURL}}
+                        style={styles.image}
+                        resizeMode="cover"
+                      />
+                    </View>
                   </LinearGradient>
                 </View>
               )}
@@ -229,6 +237,7 @@ export default function EatAI() {
                   price={item.price}
                   calories={item.calories}
                   protein={item.protein}
+                  image_url={imageURL}
                   onPress={() => router.push(`/item/${encodeURIComponent(restaurantName)}/${encodeURIComponent(item.item_id)}`)}
                 />
               ))}
@@ -348,6 +357,11 @@ const styles = StyleSheet.create({
     height: 72,
     backgroundColor: "rgba(255,255,255,0.1)",
     borderRadius: 10,
+    overflow: "hidden",
+  },
+  image: {
+    width: "100%",
+    height: "100%",
   },
   welcomeLine1: {
     color: "#FFFFFF",

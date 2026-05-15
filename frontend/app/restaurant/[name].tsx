@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import ItemCard from "../../components/ItemCard";
 import { useMenu } from "../../hooks/useMenu";
+import { getRestaurantImageURL } from "../../utils/imageURLs";
 
 
 export default function RestaurantMenu() {
@@ -14,6 +15,8 @@ export default function RestaurantMenu() {
   const { items, loading, error } = useMenu(name);
 
   const categories = [...new Set(items.map((i) => i.category))];
+
+  const imageURL = getRestaurantImageURL(name);
 
   if (loading) return <ActivityIndicator />;
   if (error) return <Text style={{ color: "white", }}>Failed to load menu.</Text>;
@@ -57,6 +60,7 @@ export default function RestaurantMenu() {
                   price={item.price}
                   calories={item.calories}
                   protein={item.protein}
+                  image_url={imageURL}
                   onPress={() => router.push(`/item/${encodeURIComponent(name)}/${encodeURIComponent(item.item_id)}`)}
                 />
               ))}

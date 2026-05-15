@@ -5,15 +5,31 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import EatAILogo from "../../../assets/EatAILogo";
 import { useItem } from "../../../hooks/useItem";
+import { getRestaurantImageURL } from "../../../utils/imageURLs";
 
 
 export default function ItemDetail() {
-  const { restaurant, id } = useLocalSearchParams<{ restaurant: string, id: string }>();
+  const params = useLocalSearchParams();
+
+  const restaurant = decodeURIComponent(
+    Array.isArray(params.restaurant)
+      ? params.restaurant[0]
+      : params.restaurant ?? ""
+  );
+
+  const id = decodeURIComponent(
+    Array.isArray(params.id)
+      ? params.id[0]
+      : params.id ?? ""
+  );
+
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
   const { item, loading, error } = useItem(restaurant, id);
   console.log("item:", item);
+
+  const imageURL = item?.image_url || getRestaurantImageURL(restaurant);
 
   if (loading) return <ActivityIndicator />;
   if (error) return <Text style={{ color: "white", }}>Failed to load item.</Text>;
@@ -45,7 +61,7 @@ export default function ItemDetail() {
         {/* Image area */}
         <View style={styles.imageArea}>
           <Image
-            source={{ uri: item?.image_url }}
+            source={{ uri: item?.image_url || imageURL }}
             style={styles.image}
             resizeMode="cover"
           />
@@ -66,19 +82,21 @@ export default function ItemDetail() {
 
           <Text style={styles.sectionTitle}>Meal Information</Text>
           <View style={styles.mealInfoRow}>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>{item?.category}</Text>
-            </View>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>{item?.serving_size}</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.eatAIButton}
-              onPress={() => router.push(`/eatai/${encodeURIComponent(restaurant)}?seed=${encodeURIComponent(id)}`)}
-              activeOpacity={0.8}
-            >
-              <EatAILogo width={35} height={16} />
-            </TouchableOpacity>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingRight: 10 }}>
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>{item?.category}</Text>
+              </View>
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>{item?.serving_size}</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.eatAIButton}
+                onPress={() => router.push(`/eatai/${encodeURIComponent(restaurant)}?seed=${encodeURIComponent(id)}`)}
+                activeOpacity={0.8}
+              >
+                <EatAILogo width={35} height={16} />
+              </TouchableOpacity>
+            </ScrollView>
           </View>
 
           <Text style={styles.sectionTitle}>Meal Description</Text>

@@ -49,7 +49,7 @@ export default function Home() {
   const hues = [0, 130, 220, 30, 300]; 
   
   if (loading) return <ActivityIndicator />;
-  if (error) return <Text style={{ color: "white", }}>Failed to load restaurants.</Text>;
+  if (error) return <Text style={styles.emptyText}>Failed to load restaurants.</Text>;
   
   return (
     <View style={styles.container}>
@@ -59,7 +59,8 @@ export default function Home() {
       />
       <TargetModal
         visible={filtersVisible}
-        onClose={() => setFiltersVisible(false)}/>
+        onClose={() => setFiltersVisible(false)}
+      />
       <SearchModal
         visible={searchVisible}
         onClose={() => setSearchVisible(false)}
