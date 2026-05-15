@@ -106,13 +106,9 @@ export default function Discover() {
             item={item}
             hue={hues[i % hues.length]}
             onPress={() =>
-              router.push({
-                pathname: "/item/[restaurant]/[id]",
-                params: {
-                  restaurant: item.restaurant_name,
-                  id: item.item_id,
-                },
-              })
+              router.push(
+                `/item/${encodeURIComponent(item.restaurant_name)}/${encodeURIComponent(item.item_id)}`
+              )
             }
           />
         ))}

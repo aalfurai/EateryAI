@@ -1,10 +1,9 @@
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
-import { MenuItem } from "../types/MenuItem";
+import { SearchItem } from "../api/item";
 
 type Props = {
-  item: MenuItem;
+  item: SearchItem;
   hue: number;
   onPress?: () => void;
 };
@@ -18,20 +17,21 @@ function getCardColors(hue: number) {
   };
 }
 
-export default function ItemCard({ item, hue }: Props) {
-  const router = useRouter();
+function formatNameForUrl(name: string) {
+  const noApostrophes = name.replace(/'/g, "");
+  return noApostrophes.toLowerCase().replace(/\s+/g, "-");
+}
 
+export default function ItemCard({ item, hue, onPress }: Props) {
   const colors = getCardColors(hue);
+
+  const formattedRestaurantName = formatNameForUrl(item.restaurant_name);
+  const itemRestaurantURL = `https://fastfoodnutrition.org/logos/${formattedRestaurantName}.jpg`;
 
   return (
     <TouchableOpacity
       style={styles.wrapper}
-      onPress={() =>
-        router.push({
-          pathname: "/item/[id]",
-          params: { id: item.item_id },
-        })
-      }
+      onPress={onPress}
     >
       {/* Border gradient */}
       <LinearGradient
@@ -67,7 +67,7 @@ export default function ItemCard({ item, hue }: Props) {
           {/* Item image */}
           <View style={styles.logoContainer}>
             <Image
-              source={{ uri: item.image_url }}
+              source={{ uri: itemRestaurantURL }}
               style={styles.logo}
               resizeMode="contain"
             />

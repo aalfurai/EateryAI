@@ -8,7 +8,20 @@ import { useItem } from "../../../hooks/useItem";
 
 
 export default function ItemDetail() {
-  const { restaurant, id } = useLocalSearchParams<{ restaurant: string, id: string }>();
+  const params = useLocalSearchParams();
+
+  const restaurant = decodeURIComponent(
+    Array.isArray(params.restaurant)
+      ? params.restaurant[0]
+      : params.restaurant ?? ""
+  );
+
+  const id = decodeURIComponent(
+    Array.isArray(params.id)
+      ? params.id[0]
+      : params.id ?? ""
+  );
+  
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
