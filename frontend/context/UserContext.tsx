@@ -5,12 +5,15 @@ type UserContextType = {
   user: User;
   setUser: (user: User) => void;
   updateConstraints: (patch: Partial<User["constraints"]>) => void;
+  token: string | null;
+  setToken: (token: string | null) => void;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User>();
+  const [token, setToken] = useState<string | null>(null);
 
   const updateConstraints = (patch: Partial<User["constraints"]>) => {
     if (user) {
@@ -25,7 +28,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <UserContext.Provider value={{ user: user as User, setUser, updateConstraints }}>
+    <UserContext.Provider value={{ user: user as User, setUser, updateConstraints, token, setToken }}>
       {children}
     </UserContext.Provider>
   );

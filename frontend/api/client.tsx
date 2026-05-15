@@ -9,8 +9,11 @@ const BASE_URL = (process.env.EXPO_PUBLIC_API_URL ?? DEV_HOST).replace(/\/$/, ""
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
   const res = await fetch(url, {
-    headers: { "Content-Type": "application/json" },
     ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
   });
   return res.json() as Promise<T>;
 }
