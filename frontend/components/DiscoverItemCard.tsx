@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SearchItem } from "../api/item";
+import { getRestaurantImageURL } from "../utils/imageURLs";
 
 type Props = {
   item: SearchItem;
@@ -17,16 +18,10 @@ function getCardColors(hue: number) {
   };
 }
 
-function formatNameForUrl(name: string) {
-  const noApostrophes = name.replace(/'/g, "");
-  return noApostrophes.toLowerCase().replace(/\s+/g, "-");
-}
-
 export default function ItemCard({ item, hue, onPress }: Props) {
   const colors = getCardColors(hue);
 
-  const formattedRestaurantName = formatNameForUrl(item.restaurant_name);
-  const itemRestaurantURL = `https://fastfoodnutrition.org/logos/${formattedRestaurantName}.jpg`;
+  const itemRestaurantURL = getRestaurantImageURL(item.restaurant_name);
 
   return (
     <TouchableOpacity
