@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 
 type Props = {
   name: string;
@@ -6,6 +6,7 @@ type Props = {
   price: number;
   calories: number;
   protein: number;
+  image_url?: string;
   onPress?: () => void;
 };
 
@@ -21,7 +22,8 @@ function categoryColor(category: string): string {
   return CATEGORY_COLORS[category] ?? "#898989";
 }
 
-export default function ItemCard({ name, category, price, calories, protein, onPress }: Props) {
+export default function ItemCard({ name, category, price, calories, protein, image_url,onPress }: Props) {
+  
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.info}>
@@ -31,7 +33,13 @@ export default function ItemCard({ name, category, price, calories, protein, onP
           ${price.toFixed(2)}  ·  {calories} cal  ·  {protein}g protein
         </Text>
       </View>
-      <View style={styles.imagePlaceholder} />
+      <View style={styles.imagePlaceholder}>
+        <Image
+          source={{ uri: image_url }}
+          style={styles.image}
+          resizeMode="contain"
+        />
+      </View>
     </TouchableOpacity>
   );
 }
@@ -74,5 +82,10 @@ const styles = StyleSheet.create({
     height: 72,
     backgroundColor: "#222",
     borderRadius: 10,
+    overflow: "hidden",
   },
+  image: {
+    width: "100%",
+    height: "100%",
+  }
 });

@@ -2,36 +2,14 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useUser } from "../../context/UserContext";
-import { User } from "../../types/user";
+import { defaultUser } from "../../data/defaultUser";
+import { weightPresets } from "../../data/weightPresets";
 import EatLogo from "../../assets/EatLogo";
-
-// replace with api call to user database
-const dummyUser: User = {
-  user_id: "1",
-  name: "dummyUser",
-  constraints: {
-    price: 14,
-    calories: 800,
-    protein: 20,
-    price_tol_pct: 0.2,
-    calories_tol_pct: 0.1,
-    protein_tol_pct: 0.3,
-  },
-  weights: {
-    price: 0.2,
-    calories: 0.4,
-    protein: 0.4,
-    fiber: 0,
-    sugar: 0,
-    sodium: 0,
-    drink_cal: 0,
-    addon_cal: 0,
-  },
-};
+import Octicons from '@expo/vector-icons/Octicons';
 
 export default function Login() {
-  const router = useRouter();
   const { setUser } = useUser();
+  const router = useRouter();
 
   return (
     <LinearGradient
@@ -48,14 +26,22 @@ export default function Login() {
       <View style={styles.centerContent}>
         {/* Welcome text */}
         <Text style={styles.title}>Welcome</Text>
-        <Text style={styles.subtitle}>Select a demo user:</Text>
+        <View style={styles.subtitleContainer}>
+          <Text style={styles.subtitle}>Select your preferred goal</Text>
+          <Octicons name="goal" size={24} color="white" />
+        </View>
+        
 
         {/* Demo Users */}
         <TouchableOpacity
           style={styles.button}
           onPress={() => {
+            setUser({
+              ...defaultUser,
+              weights: weightPresets.bodybuilder,
+            });
+
             router.replace("/(tabs)");
-            setUser(dummyUser); // replace with actual user
           }}
         >
           <Text style={styles.buttonText}>Bodybuilder</Text>
@@ -63,8 +49,12 @@ export default function Login() {
         <TouchableOpacity
           style={styles.button}
           onPress={() => {
+            setUser({
+              ...defaultUser,
+              weights: weightPresets.budgeter,
+            });
+
             router.replace("/(tabs)");
-            setUser(dummyUser); // replace with actual user
           }}
         >
           <Text style={styles.buttonText}>Budgeter</Text>
@@ -72,8 +62,12 @@ export default function Login() {
         <TouchableOpacity
           style={styles.button}
           onPress={() => {
+            setUser({
+              ...defaultUser,
+              weights: weightPresets.dieting,
+            });
+
             router.replace("/(tabs)");
-            setUser(dummyUser); // replace with actual user
           }}
         >
           <Text style={styles.buttonText}>Dieting</Text>
@@ -81,8 +75,12 @@ export default function Login() {
         <TouchableOpacity
           style={styles.button}
           onPress={() => {
+            setUser({
+              ...defaultUser,
+              weights: weightPresets.balanced,
+            });
+
             router.replace("/(tabs)");
-            setUser(dummyUser); // replace with actual user
           }}
         >
           <Text style={styles.buttonText}>Balanced</Text>
@@ -119,6 +117,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "600",
     color: "white",
+    paddingRight: 8,
+  },
+  subtitleContainer: {
+    flexDirection: "row",
     marginBottom: 30,
   },
   icon: {

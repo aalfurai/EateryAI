@@ -209,18 +209,17 @@ def get_menu_by_category(restaurant: str, category: str, conn=Depends(get_db)):
     return {"restaurant": restaurant, "category": category, "items": items}
 
 @app.get("/menu/{restaurant}/{item_id}", tags=["Menu"])
-def get_restaurant_item(restaurant: str, item_id: int, conn=Depends(get_db)):
+def get_restaurant_item(restaurant: str, item_id: str, conn=Depends(get_db)):
     """
     Single menu item detail view.
     Corresponds to the Menu Item Name screen
     (picture, Meal Description, Nutrition Information).
     """
-    restaurant = data_service.load_restaurant(conn, restaurant)
-    item = restaurant.get_item(item_id)
+    item = queries.get_menu_item_by_id(conn, item_id)
     if not item:
         raise HTTPException(
             status_code=404,
-            detail=f"Item '{item_id}' not found in '{restaurant.name}'"
+            detail=f"Item '{item_id}' not found"
         )
     return item
 
