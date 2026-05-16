@@ -1,6 +1,7 @@
 .expo/
 */node_modules/
 .DS_Store
+.installed
 
 # Recategorization Files
 *corrected_category.json
