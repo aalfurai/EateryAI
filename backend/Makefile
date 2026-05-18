@@ -1,5 +1,5 @@
 VENV = venv
-PYTHON311 := $(shell py -3.11 -c "import sys; print(sys.executable)" || python3.11 -c "import sys; print(sys.executable)" || python3 -c "import sys; print(sys.executable)")
+PYTHON311 := $(shell python3.11 -c "import sys; print(sys.executable)" 2>/dev/null || python3 -c "import sys; print(sys.executable)" 2>/dev/null)
 
 $(shell [ -d $(VENV) ] || "$(PYTHON311)" -m venv $(VENV))
 
@@ -12,13 +12,10 @@ run: $(VENV_BIN)/fastapi
 	-taskkill /F /IM uvicorn.exe 2>nul || true
 	cd src && ../$(VENV_BIN)/fastapi dev main.py --host 0.0.0.0 --port 8000
 
-$(VENV_BIN)/fastapi: .installed
-
-.installed: requirements.txt
+$(VENV_BIN)/fastapi: requirements.txt
 	$(PIP) install -r requirements.txt
-	@touch .installed
 	@echo "Ready."
 
 fresh:
-	rm -rf $(VENV) .installed
+	rm -rf $(VENV)
 	$(MAKE) run
