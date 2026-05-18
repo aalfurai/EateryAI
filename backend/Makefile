@@ -1,5 +1,5 @@
 VENV = venv
-PYTHON311 := $(shell python3.11 -c "import sys; print(sys.executable)" 2>/dev/null || python3 -c "import sys; print(sys.executable)" 2>/dev/null)
+PYTHON311 := $(shell py -3.11 -c "import sys; print(sys.executable)" 2>/dev/null || python3.11 -c "import sys; print(sys.executable)" 2>/dev/null || python3 -c "import sys; print(sys.executable)" 2>/dev/null)
 
 $(shell [ -d $(VENV) ] || "$(PYTHON311)" -m venv $(VENV))
 
