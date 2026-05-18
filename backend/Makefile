@@ -9,7 +9,7 @@ PIP = $(VENV_BIN)/python -m pip
 .PHONY: run kill fresh
 
 run: $(VENV_BIN)/fastapi
-	-taskkill /F /IM uvicorn.exe 2>nul || true
+	-taskkill /F /IM uvicorn.exe 2>nul || pkill -f uvicorn || true
 	cd src && ../$(VENV_BIN)/fastapi dev main.py --host 0.0.0.0 --port 8000
 
 $(VENV_BIN)/fastapi: requirements.txt
