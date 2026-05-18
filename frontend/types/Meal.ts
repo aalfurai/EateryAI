@@ -1,0 +1,22 @@
+export type Meal = {
+  item_ids: number[];
+  Entree_ids: number[];
+  Side_ids: number[];
+  Drink_ids: number[];
+  Addon_ids: number[];
+  Dessert_ids: number[];
+  total_price: number;
+  total_cal: number;
+  total_protein: number;
+  total_fiber: number;
+  total_sugars: number;
+  total_sodium: number;
+  total_cholesterol: number;
+  total_carbohydrates: number;
+  total_potassium: number;
+  total_fat: number;
+  drink_cal: number;
+  addon_cal: number;
+  filled_categories: string[];
+  golden_ratio: number;
+};

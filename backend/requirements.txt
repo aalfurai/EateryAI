@@ -1,0 +1,8 @@
+fastapi[standard]
+numpy==1.26.4
+pandas
+psycopg2-binary
+pydantic
+PyJWT
+python-dotenv
+pytest
