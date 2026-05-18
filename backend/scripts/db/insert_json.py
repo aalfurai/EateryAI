@@ -1,7 +1,7 @@
 import json
 import uuid
 import time
-import EateryAI.src.db.db_connection as dbc
+import src.db.db_connection as dbc
 
 def to_numeric(value, default=None):
     if value == '' or value is None:
@@ -134,5 +134,5 @@ def find_restaurant_items(file_path, name):
         print("Error decoding JSON. Ensure the file is valid.")
 
 if __name__ == "__main__":
-    # insert_meals_from_json('data/restaurants.menu_item_variations.json')
-    find_restaurant_items('data/restaurants.menu_item_variations.json', input("Enter restaurant name: "))
+    insert_meals_from_json('restaurants_data_manual_recat.json')
+    # find_restaurant_items('data/restaurants.menu_item_variations.json', input("Enter restaurant name: "))
