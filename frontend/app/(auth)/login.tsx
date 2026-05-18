@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { login } from "../../api/auth";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useUser } from "../../context/UserContext";
@@ -8,8 +9,20 @@ import EatLogo from "../../assets/EatLogo";
 import Octicons from '@expo/vector-icons/Octicons';
 
 export default function Login() {
-  const { setUser } = useUser();
+  const { setUser, setToken } = useUser();
   const router = useRouter();
+
+  const handleLogin = async (preset: keyof typeof weightPresets, userId: string) => {
+    try {
+      const { token, user } = await login({ user_id: userId, name: userId });
+      setToken(token);
+      console.log("Token made: ", token);
+      setUser({ ...user, weights: weightPresets[preset] });
+      router.replace("/(tabs)");
+    } catch (error) {
+      alert("Error: Failed to connect to server.");
+    }
+  };
 
   return (
     <LinearGradient
@@ -36,10 +49,7 @@ export default function Login() {
         <TouchableOpacity
           style={styles.button}
           onPress={() => {
-            setUser({
-              ...defaultUser,
-              weights: weightPresets.bodybuilder,
-            });
+            handleLogin("bodybuilder", "user_bodybuilder");
 
             router.replace("/(tabs)");
           }}
@@ -49,10 +59,7 @@ export default function Login() {
         <TouchableOpacity
           style={styles.button}
           onPress={() => {
-            setUser({
-              ...defaultUser,
-              weights: weightPresets.budgeter,
-            });
+            handleLogin("budgeter", "user_budgeter");
 
             router.replace("/(tabs)");
           }}
@@ -62,10 +69,7 @@ export default function Login() {
         <TouchableOpacity
           style={styles.button}
           onPress={() => {
-            setUser({
-              ...defaultUser,
-              weights: weightPresets.dieting,
-            });
+            handleLogin("dieting", "user_dieting");
 
             router.replace("/(tabs)");
           }}
@@ -75,10 +79,7 @@ export default function Login() {
         <TouchableOpacity
           style={styles.button}
           onPress={() => {
-            setUser({
-              ...defaultUser,
-              weights: weightPresets.balanced,
-            });
+            handleLogin("balanced", "user_balanced")
 
             router.replace("/(tabs)");
           }}

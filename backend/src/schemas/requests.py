@@ -4,8 +4,8 @@ from schemas.weights import Weights
 from schemas.meal import Meal
     
 class LoginRequest(BaseModel):
-    username: str
     user_id: str
+    name: str
 
 class RegisterRequest(BaseModel):
     user_id: str

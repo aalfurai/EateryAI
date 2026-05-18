@@ -80,7 +80,7 @@ def login(req: LoginRequest):
     Log in / auto-create a user. Corresponds to the Login screen.
     """
     if not data_service.check_user_exists(req.user_id):
-        user = User(user_id=req.user_id, name=req.username)
+        user = User(user_id=req.user_id, name=req.name)
         data_service.add_user(user)
     
     token = create_token(req.user_id)
