@@ -42,7 +42,6 @@ class User:
     def strong_update(self, meal, update_strength=1.0):
         # LEARNING PARAMETERS
         learning_rate = 0.005*update_strength
-        # TODO integrate decay parameter AND/OR have a "RESET" function
         decay_constant = 0.001*update_strength #combats parameter drift
 
         price_deviation = self.constraints.get_price()-meal.get_price()
@@ -89,7 +88,7 @@ class User:
                 "cal_deficit": 0.4,
                 "protein": 0.3
             }
-        else:
+        else: # (profile=="default")
             weights = {
                 "price": 0.20,
                 "cal_surplus": 0.40,

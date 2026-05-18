@@ -20,7 +20,7 @@ class Weights:
 
     # NOTE: can add more validation
     def _validate(self):
-        for field in ["price", "calories", "protein", "fiber", "sugar", "sodium", "drink_cal", "addon_cal"]:
+        for field in ["price", "cal_surplus", "cal_deficit", "protein", "fiber", "sugar", "sodium", "drink_cal", "addon_cal"]:
             value = getattr(self, field)
             if not (0 <= value <= 1):
                 raise ValueError(f"{field} weight must be between 0 and 1")

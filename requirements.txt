@@ -1,7 +1,9 @@
-fastapi
-uvicorn
-httpx
-python-dotenv
-PyJWT
-pandas
+fastapi[standard]
 numpy
+pandas
+psycopg2
+psycopg2_binary
+pydantic
+PyJWT
+python-dotenv
+pytest
