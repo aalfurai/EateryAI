@@ -4,6 +4,7 @@
 .installed
 .vscode
 nul
+data/logs/*.txt
 
 # Recategorization Files
 *corrected_category.json
