@@ -7,8 +7,8 @@ from config.security import create_token, decode_token
 from config.dependencies import pipeline, security, data_service
 import config.db as db
 from config.db import init_pool, get_db
-from backend import queries
-from backend.classes import NumRange
+from helpers import queries
+from helpers.classes import NumRange
 from contextlib import asynccontextmanager
 
 
