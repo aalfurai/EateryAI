@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict TXrdv1dfPZFSEtWNdFfjrJnh7h7bXO3ikJopQwQ7zvwC6yov0Be4yC1M5Zty6vp
+-- \restrict TXrdv1dfPZFSEtWNdFfjrJnh7h7bXO3ikJopQwQ7zvwC6yov0Be4yC1M5Zty6vp
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -357,5 +357,5 @@ ALTER TABLE ONLY "eateryai_test1".nutrition_info
 -- PostgreSQL database dump complete
 --
 
-\unrestrict TXrdv1dfPZFSEtWNdFfjrJnh7h7bXO3ikJopQwQ7zvwC6yov0Be4yC1M5Zty6vp
+-- \unrestrict TXrdv1dfPZFSEtWNdFfjrJnh7h7bXO3ikJopQwQ7zvwC6yov0Be4yC1M5Zty6vp
 
