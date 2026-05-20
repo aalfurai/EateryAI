@@ -45,9 +45,9 @@ const PILL_CATEGORIES: Record<string, string[]> = {
   alt:     ["Entree", "Side", "Drink"],
 };
 
-function resolveItems(ids: number[], menuItems: MenuItem[]): MenuItem[] {
+function resolveItems(ids: string[], menuItems: MenuItem[]): MenuItem[] {
   return ids.flatMap((id) => {
-    const item = menuItems.find((m) => m.index === id || Number(m.item_id) === id);
+    const item = menuItems.find((m) => String(m.item_id) === String(id));
     return item ? [item] : [];
   });
 }
@@ -133,7 +133,7 @@ export default function EatAI() {
       .catch(() => {});
   }, [seed, restaurantName]);
 
-  const currentMeal  = meals[currentIdx] ?? null;
+  const currentMeal = (meals ?? [])[currentIdx] ?? null;
   const currentItems = currentMeal ? getMealItems(currentMeal, menuItems) : [];
 
   const handleGenerate = async (categories = ["Entree", "Side", "Drink"]) => {
@@ -142,10 +142,10 @@ export default function EatAI() {
     setHasGenerated(true);
     try {
       const { recommendations } = await getRecommendations(
-        { restaurant_name: restaurantName, categories, seed_id: seed ? decodeURIComponent(seed) : undefined },
+        { restaurant_name: restaurantName, categories, seed_id: seed ? decodeURIComponent(seed) : undefined, calories: seedItem?.calories },
         token,
       );
-      setMeals(recommendations);
+      setMeals(recommendations ?? []);
       setCurrentIdx(0);
     } catch {
       setMeals([]);

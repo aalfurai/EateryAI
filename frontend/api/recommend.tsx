@@ -5,6 +5,8 @@ type RecommendRequest = {
   restaurant_name: string;
   categories: string[];
   seed_id?: string;
+  // used to differenciate between same id items
+  calories?: number;
 };
 
 type RecommendResponse = {

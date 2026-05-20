@@ -1,10 +1,10 @@
 export type Meal = {
-  item_ids: number[];
-  Entree_ids: number[];
-  Side_ids: number[];
-  Drink_ids: number[];
-  Addon_ids: number[];
-  Dessert_ids: number[];
+  item_ids: string[];
+  Entree_ids: string[];
+  Side_ids: string[];
+  Drink_ids: string[];
+  Addon_ids: string[];
+  Dessert_ids: string[];
   total_price: number;
   total_cal: number;
   total_protein: number;
