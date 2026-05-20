@@ -121,9 +121,13 @@ def score_and_rank_meals(user: User, results: list, k=50, lambda_div=0.3) -> pd.
     result['filled_categories'] = result['filled_categories'].apply(list)
     return result.to_dict(orient='records')
 
-def get_entree_combos(seed_id, entree_combos, is_entree):
+def get_entree_combos(seed_id, entree_combos, is_entree, menu):
     if is_entree:
-        return entree_combos[entree_combos['entree_ids'].apply(lambda ids: seed_id in ids)]
+        matches = menu.get(seed_id, [])
+        if not matches:
+            return entree_combos.iloc[0:0]
+        seed_index = matches[0]['index']
+        return entree_combos[entree_combos['entree_ids'].apply(lambda ids: seed_index in ids)]
     return entree_combos
 
 def get_cand_items(seed_id, category, 
@@ -192,9 +196,13 @@ def build_meal(user: User, seed_id, required_categories, restaurant: Restaurant,
         is_drink = (category == 'Drink')
         is_addon = (category == 'Add-on')
 
+        # change Add-on to Addon for consistency with category naming
+        if category == 'Add-on':
+            category = 'Addon'
+
         # if the item is an entree, get all entree combos
         if is_entree and build_full:
-            candidate_entrees = get_entree_combos(seed_id=seed_id, entree_combos=entree_combos, is_entree=is_entree)
+            candidate_entrees = get_entree_combos(seed_id=seed_id, entree_combos=entree_combos, is_entree=is_entree, menu=restaurant.menu)
             for _, combo in candidate_entrees.iterrows():
                 meal_state = Meal(
                     item_ids = list(combo['entree_ids']),
@@ -281,6 +289,8 @@ def build_meal(user: User, seed_id, required_categories, restaurant: Restaurant,
                     new_meal.item_ids.extend(list(item['entree_ids']))
                     new_meal.Entree_ids.extend(list(item['entree_ids']))
                 else:
+                    if category == 'Add-on':
+                        category = 'Addon'  # adjust for naming consistency
                     new_meal.item_ids.append(item['index'])
                     getattr(new_meal, f"{category}_ids").append(item['index'])
 

@@ -21,7 +21,7 @@ class PipelineService:
         try:
             meals = solver.build_meal(
                 user=user,
-                seed_id=seed_item['index'] if seed_item else None,
+                seed_id=seed_item['item_id'] if seed_item else None,
                 required_categories=required_categories,
                 restaurant=restaurant,
                 entree_combos=restaurant.entree_combos,

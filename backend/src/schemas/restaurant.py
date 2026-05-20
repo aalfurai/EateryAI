@@ -30,7 +30,6 @@ class Restaurant:
 
     def get_item(self, item_id: str, calories: int | None = None) -> dict:
         """Get a menu item by item_id."""
-        print(self.menu)
         items = self.menu.get(item_id, None)
         if not items:
             raise KeyError(f"Item with ID '{item_id}' not found")
