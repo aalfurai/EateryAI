@@ -274,7 +274,7 @@ def recommend(req: RecommendRequest, credentials=Depends(security), conn=Depends
     """
     user_id = decode_token(credentials.credentials)
     user = data_service.load_user(user_id)
-    return {"user": user.to_dict(), "recommendations": pipeline.recommend(conn, user, req.restaurant_name, req.seed_id, req.categories)}
+    return {"user": user.to_dict(), "recommendations": pipeline.recommend(conn, user, req.restaurant_name, req.seed_id, req.calories, req.categories)}
 
 # TODO: reimplement to recommend seed items only
 # @app.post("/recommend/for-you", tags=["Recommend"])

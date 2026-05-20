@@ -28,9 +28,17 @@ class Restaurant:
 
     # ── item access ───────────────────────────────────────────────────────────
 
-    def get_item(self, idx: int) -> dict:
-        """Get a menu item by index."""
-        return self.menu.get(idx, None)
+    def get_item(self, item_id: str, calories: int | None = None) -> dict:
+        """Get a menu item by item_id."""
+        items = self.menu.get(item_id, None)
+        if not items:
+            raise KeyError(f"Item with ID '{item_id}' not found")
+        if len(items) == 1:
+            return items[0]
+        if len(items) > 1:
+            for item in items:
+                if calories and item.get("calories") == calories:
+                    return item
 
     def get_by_category(self, category: str) -> list:
         """Get all items for a given meal category."""

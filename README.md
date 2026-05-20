@@ -12,18 +12,18 @@ make run
 ```bash
 py -3.11 -m venv venv
 [source] venv/Scripts/activate
-pip install -r requirements.txt
+venv/Scripts/pip.exe install -r requirements.txt
 cd src
-fastapi dev main.py
+../venv/Scripts/fastapi.exe dev main.py --host 0.0.0.0 --port 8000
 ```
 
 ### Maunal setup and run backend (Mac/Linux)
 ```bash
 python3.11 -m venv venv
 [source] venv/bin/activate
-pip install -r requirements.txt
+venv/bin/pip.exe install -r requirements.txt
 cd src
-fastapi dev main.py
+../venv/bin/fastapi.exe dev main.py --host 0.0.0.0 --port 8000
 ```
 
 ## Starting The Frontend
