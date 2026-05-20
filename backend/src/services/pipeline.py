@@ -12,9 +12,9 @@ class PipelineService:
     def __init__(self, data_service: DataService):
         self.data = data_service
 
-    def recommend(self, conn, user: User, restaurant_name: str, seed_id: str = None, required_categories: set[str] = None) -> list[Meal]:
+    def recommend(self, conn, user: User, restaurant_name: str, seed_id: str = None, calories: int = None, required_categories: set[str] = None) -> list[Meal]:
         restaurant = self.data.load_restaurant(conn, restaurant_name)
-        seed       = restaurant.get_item(int(seed_id)) if seed_id else None
+        seed       = restaurant.get_item(seed_id, calories) if seed_id else None
         return self._build_top_combos(user, restaurant, seed_item=seed, required_categories=required_categories)
 
     def _build_top_combos(self, user: User, restaurant: Restaurant, seed_item: dict | None, required_categories: set[str]) -> pd.DataFrame:

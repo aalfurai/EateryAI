@@ -17,6 +17,7 @@ class RecommendRequest(BaseModel):
     restaurant_name: str | None = None
     categories: set[str] = {"Entree", "Side", "Drink"}
     seed_id: str | None = None
+    calories: int | None = None
 
 class ConstraintsRequest(BaseModel):
     price: float | None = None
