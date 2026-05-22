@@ -266,7 +266,7 @@ export default function EatAI() {
             <View style={styles.followUpRow}>
               <PillRow pills={FOLLOW_UP_PILLS} onPress={handlePill} />
               <TouchableOpacity onPress={() => setFiltersVisible(true)} style={styles.hamburger}>
-                <Ionicons name="menu" size={26} color="white" />
+                <Ionicons name="options-outline" size={26} color="white" />
               </TouchableOpacity>
             </View>
           )}
@@ -277,7 +277,7 @@ export default function EatAI() {
               onPress={() => setFiltersVisible(true)}
               style={styles.hamburgerRight}
             >
-              <Ionicons name="menu" size={26} color="white" />
+              <Ionicons name="options-outline" size={26} color="white" />
             </TouchableOpacity>
           )}
 
