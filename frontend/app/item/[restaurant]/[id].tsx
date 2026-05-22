@@ -112,9 +112,6 @@ export default function ItemDetail() {
             <View style={styles.divider} />
             <NutritionCell label="Sodium" value={`${item?.sodium}mg`} />
             <View style={styles.divider} />
-            <NutritionCell label="Cholesterol" value={`${item?.cholesterol}mg`} />
-            <View style={styles.divider} />
-            <NutritionCell label="Potassium" value={`${item?.potassium}mg`} />
           </View>
         </View>
       </ScrollView>

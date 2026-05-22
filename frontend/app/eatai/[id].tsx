@@ -175,6 +175,16 @@ export default function EatAI() {
       >
         <TargetModal visible={filtersVisible} onClose={() => setFiltersVisible(false)} />
 
+        <TouchableOpacity
+          onPress={() => setFiltersVisible(true)}
+          style={[
+            styles.floatingFiltersButton,
+            { bottom: insets.bottom + 80 }
+          ]}
+        >
+          <Ionicons name="options-outline" size={26} color="white" />
+        </TouchableOpacity>
+
         {/* ── SCROLL CONTENT ── */}
         <ScrollView
           contentContainerStyle={styles.scroll}
@@ -265,20 +275,7 @@ export default function EatAI() {
           {hasGenerated && !loading && (
             <View style={styles.followUpRow}>
               <PillRow pills={FOLLOW_UP_PILLS} onPress={handlePill} />
-              <TouchableOpacity onPress={() => setFiltersVisible(true)} style={styles.hamburger}>
-                <Ionicons name="menu" size={26} color="white" />
-              </TouchableOpacity>
             </View>
-          )}
-
-          {/* Hamburger alone in welcome state */}
-          {!hasGenerated && (
-            <TouchableOpacity
-              onPress={() => setFiltersVisible(true)}
-              style={styles.hamburgerRight}
-            >
-              <Ionicons name="menu" size={26} color="white" />
-            </TouchableOpacity>
           )}
 
           {/* Prompt bar */}
@@ -431,10 +428,25 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   hamburger: {
-    paddingBottom: 2,
+    position: "absolute",
+    right: 16,
+    bottom: 100,
   },
   hamburgerRight: {
     alignSelf: "flex-end",
+  },
+  floatingFiltersButton: {
+    position: "absolute",
+    right: 16,
+    zIndex: 1000,
+
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+
+    backgroundColor: "rgba(40, 40, 40, 0.67)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   promptBar: {
     flexDirection: "row",

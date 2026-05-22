@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, StyleSheet, ScrollView } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useUser } from "../../context/UserContext";
 import ProfileHeader from "../../components/ProfileHeader";
@@ -11,9 +11,9 @@ export default function Placeholder() {
       style={styles.container}
     >
       <ProfileHeader username={user?.name}/>
-      <View>
-        <Text>Coming soon</Text>
-      </View>
+      <ScrollView>
+        {/* TODO: add saved meals */}
+      </ScrollView>
     </LinearGradient>
   );
 }
