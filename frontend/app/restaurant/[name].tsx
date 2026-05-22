@@ -14,7 +14,26 @@ export default function RestaurantMenu() {
 
   const { items, loading, error } = useMenu(name);
 
-  const categories = [...new Set(items.map((i) => i.category))];
+  // force order to display categories
+  const CATEGORY_ORDER = [
+    "Entree",
+    "Side",
+    "Drink",
+    "Add-On",
+    "Dessert",
+  ];
+
+  const categories = [...new Set(items.map((i) => i.category))].sort(
+    (a, b) => {
+      const aIndex = CATEGORY_ORDER.indexOf(a);
+      const bIndex = CATEGORY_ORDER.indexOf(b);
+
+      if (aIndex === -1) return 1;
+      if (bIndex === -1) return -1;
+
+      return aIndex - bIndex;
+    }
+  );
 
   const imageURL = getRestaurantImageURL(name);
 
