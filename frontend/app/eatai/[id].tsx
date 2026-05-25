@@ -122,6 +122,7 @@ export default function EatAI() {
   const [prompt, setPrompt]                 = useState("");
   const [loading, setLoading]               = useState(false);
   const [meals, setMeals]                   = useState<Meal[]>([]);
+  const [summary, setSummary]               = useState("");
   const [currentIdx, setCurrentIdx]         = useState(0);
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [hasGenerated, setHasGenerated]     = useState(false);
@@ -134,18 +135,19 @@ export default function EatAI() {
   }, [seed, restaurantName]);
 
   const currentMeal = (meals ?? [])[currentIdx] ?? null;
-  const currentItems = currentMeal ? getMealItems(currentMeal, menuItems) : [];
+  const currentItems = currentMeal?.items ?? [];
 
   const handleGenerate = async (categories = ["Entree", "Side", "Drink"]) => {
     if (!token) return;
     setLoading(true);
     setHasGenerated(true);
     try {
-      const { recommendations } = await getRecommendations(
+      const { recommendations, summary: llmSummary } = await getRecommendations(
         { restaurant_name: restaurantName, categories, seed_id: seed ? decodeURIComponent(seed) : undefined, calories: seedItem?.calories },
         token,
       );
       setMeals(recommendations ?? []);
+      setSummary(llmSummary ?? "");
       setCurrentIdx(0);
     } catch {
       setMeals([]);
@@ -155,6 +157,10 @@ export default function EatAI() {
   };
 
   const handlePill = (pill: Pill) => {
+    if (pill.id === "alt" && meals.length > 1) {
+      setCurrentIdx((prev) => (prev + 1) % meals.length);
+      return;
+    }
     handleGenerate(PILL_CATEGORIES[pill.id] ?? ["Entree", "Side", "Drink"]);
   };
 
@@ -236,7 +242,7 @@ export default function EatAI() {
           ) : currentMeal ? (
             <View>
               <Text style={styles.summaryText}>
-                {buildSummary(currentMeal, user?.constraints)}
+                {summary || buildSummary(currentMeal, user?.constraints)}
               </Text>
 
               {currentItems.map((item) => (
