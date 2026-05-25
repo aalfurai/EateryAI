@@ -1,7 +1,7 @@
 import itertools
 import pandas as pd
 from fastapi import HTTPException
-from backend import queries
+from helpers import queries
 from schemas.user import User
 from schemas.restaurant import Restaurant
 from schemas.meal import Meal

@@ -1,6 +1,6 @@
 import psycopg2.extras
-import backend.query_helpers as query_helpers
-from backend.classes import NumRange
+import helpers.query_helpers as query_helpers
+from helpers.classes import NumRange
 
 # CRUD functions
 # notes: using RealDictCursor for the purpose of making result queries easier to navigate
@@ -156,7 +156,13 @@ def get_menu_items_for_solver(conn, restaurant_id: str):
                 n.serving_size
             FROM menu_items m
             JOIN nutrition_info n ON m.item_id = n.item_id
-            WHERE m.restaurant_id = %s;
+            WHERE m.restaurant_id = %s
+            ORDER BY CASE 
+                WHEN category = 'Entree' THEN 1
+                WHEN category = 'Side' THEN 2
+                WHEN category = 'Drink' THEN 3
+                ELSE 4 
+            END;
         """, (restaurant_id,))
         return cur.fetchall()
 
