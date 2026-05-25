@@ -248,7 +248,7 @@ export default function EatAI() {
                   calories={item.calories}
                   protein={item.protein}
                   image_url={imageURL}
-                  onPress={() => router.push(`/item/${encodeURIComponent(restaurantName)}/${encodeURIComponent(item.item_id)}`)}
+                  onPress={() => router.push(`/item/${encodeURIComponent(restaurantName)}/${encodeURIComponent(item.item_id)}?source=eatai`)}
                 />
               ))}
 
