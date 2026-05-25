@@ -47,7 +47,7 @@ const PILL_CATEGORIES: Record<string, string[]> = {
 
 function resolveItems(ids: string[], menuItems: MenuItem[]): MenuItem[] {
   return ids.flatMap((id) => {
-    const item = menuItems.find((m) => String(m.item_id) === String(id));
+    const item = menuItems.find((m) => String(m.index) === String(id));
     return item ? [item] : [];
   });
 }
