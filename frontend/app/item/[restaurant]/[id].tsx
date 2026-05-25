@@ -23,6 +23,12 @@ export default function ItemDetail() {
       : params.id ?? ""
   );
 
+  const source = Array.isArray(params.source)
+    ? params.source[0]
+    : params.source;
+
+  const fromEatAI = source === "eatai";
+
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -89,13 +95,15 @@ export default function ItemDetail() {
               <View style={styles.tag}>
                 <Text style={styles.tagText}>{item?.serving_size}</Text>
               </View>
-              <TouchableOpacity
-                style={styles.eatAIButton}
-                onPress={() => router.push(`/eatai/${encodeURIComponent(restaurant)}?seed=${encodeURIComponent(id)}`)}
-                activeOpacity={0.8}
-              >
-                <EatAILogo width={35} height={16} />
-              </TouchableOpacity>
+              {!fromEatAI && (
+                <TouchableOpacity
+                  style={styles.eatAIButton}
+                  onPress={() => router.push(`/eatai/${encodeURIComponent(restaurant)}?seed=${encodeURIComponent(id)}`)}
+                  activeOpacity={0.8}
+                >
+                  <EatAILogo width={35} height={16} />
+                </TouchableOpacity>
+            )}
             </ScrollView>
           </View>
 
