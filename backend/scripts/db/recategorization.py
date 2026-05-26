@@ -29,15 +29,12 @@ def update_item_category(item_id: str, new_cat: str, cursor_obj: any) -> None:
         """
 
         cursor_obj.execute(query, (stripped_new_cat, stripped_item_id))
-        if cursor_obj.rowcount == 0:
+        if cursor_obj.rowcount <= 0:
             raise MenuItemDoestNotExistError("peepee")
-        else:
-            # print(f"Successfully recategorized '{item_id}' to: {new_cat}")
-            pass
 
 
     except MenuItemDoestNotExistError as menu_error:
-        print(f"MenuItemNotFoundError: Tried updating non-existent '{item_id}' entry to '{new_cat}'. Details: {menu_error}")
+        # print(f"MenuItemNotFoundError: Tried updating non-existent '{item_id}' entry to '{new_cat}'. Details: {menu_error}")
         # print(f"{stripped_item_id}, {stripped_new_cat}")
         msg = f"{item_id}, {new_cat}"
         error_logger.log_error(menu_error, msg)
@@ -61,6 +58,8 @@ def update_item_categories(cat_list: list) -> None:
                 msg = f"Item={item_id}, New Category={new_cat}"
                 error_logger.log_error(db_error, msg)
                 conn.rollback()
+        conn.commit()
+
 def recategorization():
     file_path = "data/recategorized/recategorized_data.json"
     with open(file_path, 'r', encoding='utf-8') as file_obj:
