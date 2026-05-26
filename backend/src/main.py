@@ -5,6 +5,7 @@ from schemas.user import User
 from schemas.requests import RecommendRequest, ConstraintsRequest, WeightsRequest, SaveMealRequest, LoginRequest, RegisterRequest
 from config.security import create_token, decode_token
 from config.dependencies import pipeline, security, data_service
+from services.llm import generate_meal_summary
 import config.db as db
 from config.db import init_pool, get_db
 from helpers import queries
@@ -274,7 +275,26 @@ def recommend(req: RecommendRequest, credentials=Depends(security), conn=Depends
     """
     user_id = decode_token(credentials.credentials)
     user = data_service.load_user(user_id)
-    return {"user": user.to_dict(), "recommendations": pipeline.recommend(conn, user, req.restaurant_name, req.seed_id, req.calories, req.categories)}
+    recommendations = pipeline.recommend(conn, user, req.restaurant_name, req.seed_id, req.calories, req.categories)
+    restaurant = data_service.load_restaurant(conn, req.restaurant_name)
+    summary = generate_meal_summary(user, recommendations, restaurant, seed_id=req.seed_id)
+
+    index_to_item = {
+        item["index"]: {
+            "item_id":        item["item_id"],
+            "menu_item_name": item["menu_item_name"],
+            "category":       item["category"],
+            "price":          item["price"],
+            "calories":       item["calories"],
+            "protein":        item["protein"],
+        }
+        for items_list in restaurant.menu.values()
+        for item in items_list
+    }
+    for meal in recommendations:
+        meal["items"] = [index_to_item[idx] for idx in meal.get("item_ids", []) if idx in index_to_item]
+
+    return {"user": user.to_dict(), "recommendations": recommendations, "summary": summary}
 
 # TODO: reimplement to recommend seed items only
 # @app.post("/recommend/for-you", tags=["Recommend"])
