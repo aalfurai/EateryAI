@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from "react";
 import { User } from "../types/user";
+import { updateUserConstraints } from "../api/user";
 
 type UserContextType = {
   user: User;
@@ -15,15 +16,33 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User>();
   const [token, setToken] = useState<string | null>(null);
 
-  const updateConstraints = (patch: Partial<User["constraints"]>) => {
-    if (user) {
+  const updateConstraints = async (
+    patch: Partial<User["constraints"]>
+  ) => {
+    if (!user || !token) return;
+
+    const updatedConstraints = {
+      ...user.constraints,
+      ...patch,
+    };
+
+    setUser({
+      ...user,
+      constraints: updatedConstraints,
+    });
+
+    try {
+      const response = await updateUserConstraints(
+        token,
+        updatedConstraints
+      );
+
       setUser({
         ...user,
-        constraints: {
-          ...user.constraints,
-          ...patch,
-        },
+        constraints: response.constraints,
       });
+    } catch (err) {
+      console.error("Failed to update constraints", err);
     }
   };
 
