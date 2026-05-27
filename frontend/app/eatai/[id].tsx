@@ -161,6 +161,20 @@ export default function EatAI() {
       setCurrentIdx((prev) => (prev + 1) % meals.length);
       return;
     }
+
+    // handle add side template: categories need to include current item/meal categories + side
+    if (pill.id === "side" && currentMeal) {
+      const currentCategories = new Set(currentMeal.items?.map((i) => i.category));
+      currentCategories.add("Side");
+      handleGenerate(Array.from(currentCategories));
+      return;
+    }
+    if (pill.id === "side" && !currentMeal && seedItem) {
+      const currentCategories = new Set<string>([seedItem.category, "Side"]);
+      handleGenerate(Array.from(currentCategories));
+      return;
+    }
+
     handleGenerate(PILL_CATEGORIES[pill.id] ?? ["Entree", "Side", "Drink"]);
   };
 
