@@ -334,20 +334,22 @@ export default function EatAI() {
               <Text style={styles.loadingText}>No meals found. Try a different option.</Text>
             </View>
           )}
+
+          <View style={styles.bottomArea}>
+            {/* Follow-up pills + hamburger (results state only) */}
+            {hasGenerated && !loading && (
+              <View style={styles.followUpRow}>
+                <PillRow
+                  pills={FOLLOW_UP_PILLS.filter((p) => p.id !== "alt" || numRounds > 1)}
+                  onPress={handlePill}
+                />
+              </View>
+            )}
+          </View>
         </ScrollView>
 
         {/* ── BOTTOM BAR ── */}
         <View style={[styles.bottomArea, { paddingBottom: insets.bottom + 8 }]}>
-          {/* Follow-up pills + hamburger (results state only) */}
-          {hasGenerated && !loading && (
-            <View style={styles.followUpRow}>
-              <PillRow
-                pills={FOLLOW_UP_PILLS.filter((p) => p.id !== "alt" || numRounds > 1)}
-                onPress={handlePill}
-              />
-            </View>
-          )}
-
           {/* Prompt bar */}
           <View style={styles.promptBar}>
             <View style={styles.inputContainer}>
