@@ -24,6 +24,8 @@ class Meal:
     filled_categories:  set = field(default_factory=set)
     total_price:        float = 0.0
     golden_ratio:       float = 0.0
+    restaurant_name:    str = ""
+    items:              list = field(default_factory=list)
 
     def get_price(self):
         return self.total_price

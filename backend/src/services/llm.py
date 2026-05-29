@@ -67,8 +67,9 @@ def generate_meal_summary(user: User, meals: list[dict], restaurant: Restaurant,
             f"Top meal breakdown:\n{category_lines}",
             f"Total: {top['total_cal']} cal · {top['total_protein']}g protein · ${top['total_price']:.2f}",
         ]
-        if len(meals) > 1:
-            lines.append(f"Alternative options available: {len(meals) - 1}")
+        num_alt_rounds = min(2, (len(meals) - 1) // 3)
+        if num_alt_rounds > 0:
+            lines.append(f"Alternative meal sets available: {num_alt_rounds} (user can tap 'Alternative Meals' to see them)")
 
         seed_name, seed_category = _get_seed_context(seed_id, restaurant)
 

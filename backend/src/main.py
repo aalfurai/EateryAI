@@ -293,6 +293,7 @@ def recommend(req: RecommendRequest, credentials=Depends(security), conn=Depends
     }
     for meal in recommendations:
         meal["items"] = [index_to_item[idx] for idx in meal.get("item_ids", []) if idx in index_to_item]
+        meal["restaurant_name"] = req.restaurant_name
 
     return {"user": user.to_dict(), "recommendations": recommendations, "summary": summary}
 
