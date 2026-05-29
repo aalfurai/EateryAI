@@ -19,6 +19,7 @@ import { getItem } from "../../api/item";
 import { Meal } from "../../types/Meal";
 import { MenuItem } from "../../api/menu";
 import { getRestaurantImageURL } from "../../utils/imageURLs";
+import NutritionCard from "../../components/NutritionCard";
 
 type Pill = {
   id: string;
@@ -130,6 +131,8 @@ export default function EatAI() {
   const [savedKeys, setSavedKeys]           = useState<Map<string, number>>(new Map());
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [hasGenerated, setHasGenerated]     = useState(false);
+  const [showNutrition, setShowNutrition]   = useState(false);
+  const [nutritionIdx, setNutritionIdx] = useState(0);
 
   useEffect(() => {
     if (!seed) return;
@@ -149,6 +152,7 @@ export default function EatAI() {
 
   const handleGenerate = async (categories = ["Entree", "Side", "Drink"]) => {
     if (!token) return;
+    setShowNutrition(false);
     setLoading(true);
     setHasGenerated(true);
     try {
@@ -168,6 +172,15 @@ export default function EatAI() {
   };
 
   const handlePill = (pill: Pill) => {
+    // toggle nutritional information
+    if (pill.id === "nutrition") {
+      setShowNutrition(prev => !prev);
+      return;
+    }
+    else {
+      setShowNutrition(false);
+    }
+
     if (pill.id === "alt") {
       // Cycle to the next round of 3 meals, wrapping back to round 0 after the last
       setRoundIdx((prev) => (prev + 1) % numRounds);
@@ -362,6 +375,52 @@ export default function EatAI() {
                       <View style={[styles.dot, i === mealIdx && styles.dotActive]} />
                     </TouchableOpacity>
                   ))}
+                </View>
+              )}
+
+              {/* Nutrition breakdown section */}
+              {showNutrition && (
+                <View style={styles.nutritionalBreakdown}>
+                  <FlatList
+                    data={currentRoundMeals}
+                    horizontal
+                    pagingEnabled
+                    showsHorizontalScrollIndicator={false}
+                    keyExtractor={(_, index) => `nutrition-${index}`}
+                    onMomentumScrollEnd={(event) => {
+                      const index = Math.round(
+                        event.nativeEvent.contentOffset.x / SCREEN_WIDTH
+                      );
+                      setNutritionIdx(index);
+                    }}
+                    renderItem={({ item: meal, index }) => (
+                      <View style={{ width: SCREEN_WIDTH }}>
+                        <Text style={styles.mealLabel}>
+                          Recommendation #{index + 1}
+                        </Text>
+
+                        <NutritionCard meal={meal} />
+                      </View>
+                    )}
+                  />
+
+                  {currentRoundMeals.length > 1 && (
+                    <View style={styles.dotsRow}>
+                      {currentRoundMeals.map((_, i) => (
+                        <TouchableOpacity
+                          key={i}
+                          onPress={() => setNutritionIdx(i)}
+                        >
+                          <View
+                            style={[
+                              styles.dot,
+                              i === nutritionIdx && styles.dotActive,
+                            ]}
+                          />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
                 </View>
               )}
             </View>
@@ -598,5 +657,16 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     justifyContent: "center",
     alignItems: "center",
+  },
+  nutritionalBreakdown: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  mealLabel : {
+    color: "white",
+    fontSize: 14,
+    fontWeight: 600,
+    marginLeft: 16,
+    marginBottom: 10,
   },
 });
