@@ -1,6 +1,7 @@
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Image
+  TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, 
+  Image, FlatList, Dimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -144,6 +145,7 @@ export default function EatAI() {
   const currentRoundMeals = (meals ?? []).slice(roundIdx * ROUND_SIZE, (roundIdx + 1) * ROUND_SIZE);
   const currentMeal = currentRoundMeals[mealIdx] ?? null;
   const currentItems = currentMeal?.items ?? [];
+  const SCREEN_WIDTH = Dimensions.get("window").width;
 
   const handleGenerate = async (categories = ["Entree", "Side", "Drink"]) => {
     if (!token) return;
@@ -281,43 +283,77 @@ export default function EatAI() {
             </View>
           ) : currentMeal ? (
             <View>
-              <Text style={styles.summaryText}>
-                {summary || buildSummary(currentMeal, user?.constraints)}
-              </Text>
+              <FlatList
+                data={currentRoundMeals}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(_, index) => index.toString()}
+                onMomentumScrollEnd={(event) => {
+                  const index = Math.round(
+                    event.nativeEvent.contentOffset.x / SCREEN_WIDTH
+                  );
+                  setMealIdx(index);
+                }}
+                renderItem={({ item: meal }) => {
+                  const mealItems = meal.items ?? [];
 
-              {/* Heart / save button */}
-              {(() => {
-                const isSaved = savedKeys.has(currentMeal.item_ids.join(",") );
-                return (
-                  <TouchableOpacity
-                    style={styles.heartButton}
-                    onPress={handleSaveMeal}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons
-                      name={isSaved ? "heart" : "heart-outline"}
-                      size={22}
-                      color={isSaved ? "#ff2975" : "#555"}
-                    />
-                    <Text style={[styles.heartLabel, isSaved && styles.heartLabelSaved]}>
-                      {isSaved ? "Saved" : "Save meal"}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })()}
+                  return (
+                    <View style={{ width: SCREEN_WIDTH }}>
+                      <Text style={styles.summaryText}>
+                        {summary || buildSummary(meal, user?.constraints)}
+                      </Text>
 
-              {currentItems.map((item) => (
-                <ItemCard
-                  key={item.item_id}
-                  name={item.menu_item_name}
-                  category={item.category}
-                  price={item.price}
-                  calories={item.calories}
-                  protein={item.protein}
-                  image_url={imageURL}
-                  onPress={() => router.push(`/item/${encodeURIComponent(restaurantName)}/${encodeURIComponent(item.item_id)}?source=eatai`)}
-                />
-              ))}
+                      {/* Heart / save button */}
+                      {(() => {
+                        const isSaved = savedKeys.has(meal.item_ids.join(","));
+
+                        return (
+                          <TouchableOpacity
+                            style={styles.heartButton}
+                            onPress={handleSaveMeal}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons
+                              name={isSaved ? "heart" : "heart-outline"}
+                              size={22}
+                              color={isSaved ? "#ff2975" : "#555"}
+                            />
+
+                            <Text
+                              style={[
+                                styles.heartLabel,
+                                isSaved && styles.heartLabelSaved,
+                              ]}
+                            >
+                              {isSaved ? "Saved" : "Save meal"}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })()}
+
+                      {mealItems.map((item) => (
+                        <ItemCard
+                          key={item.item_id}
+                          name={item.menu_item_name}
+                          category={item.category}
+                          price={item.price}
+                          calories={item.calories}
+                          protein={item.protein}
+                          image_url={imageURL}
+                          onPress={() =>
+                            router.push(
+                              `/item/${encodeURIComponent(
+                                restaurantName
+                              )}/${encodeURIComponent(item.item_id)}?source=eatai`
+                            )
+                          }
+                        />
+                      ))}
+                    </View>
+                  );
+                }}
+              />
 
               {currentRoundMeals.length > 1 && (
                 <View style={styles.dotsRow}>
@@ -335,8 +371,8 @@ export default function EatAI() {
             </View>
           )}
 
+          {/* Follow-up pills + hamburger (results state only) */}
           <View style={styles.bottomArea}>
-            {/* Follow-up pills + hamburger (results state only) */}
             {hasGenerated && !loading && (
               <View style={styles.followUpRow}>
                 <PillRow
