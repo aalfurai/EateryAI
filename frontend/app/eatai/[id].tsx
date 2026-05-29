@@ -1,6 +1,7 @@
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Image
+  TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, 
+  Image, FlatList, Dimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -18,6 +19,7 @@ import { getItem } from "../../api/item";
 import { Meal } from "../../types/Meal";
 import { MenuItem } from "../../api/menu";
 import { getRestaurantImageURL } from "../../utils/imageURLs";
+import NutritionCard from "../../components/NutritionCard";
 
 type Pill = {
   id: string;
@@ -129,6 +131,8 @@ export default function EatAI() {
   const [savedKeys, setSavedKeys]           = useState<Map<string, number>>(new Map());
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [hasGenerated, setHasGenerated]     = useState(false);
+  const [showNutrition, setShowNutrition]   = useState(false);
+  const [nutritionIdx, setNutritionIdx] = useState(0);
 
   useEffect(() => {
     if (!seed) return;
@@ -144,9 +148,11 @@ export default function EatAI() {
   const currentRoundMeals = (meals ?? []).slice(roundIdx * ROUND_SIZE, (roundIdx + 1) * ROUND_SIZE);
   const currentMeal = currentRoundMeals[mealIdx] ?? null;
   const currentItems = currentMeal?.items ?? [];
+  const SCREEN_WIDTH = Dimensions.get("window").width;
 
   const handleGenerate = async (categories = ["Entree", "Side", "Drink"]) => {
     if (!token) return;
+    setShowNutrition(false);
     setLoading(true);
     setHasGenerated(true);
     try {
@@ -166,6 +172,15 @@ export default function EatAI() {
   };
 
   const handlePill = (pill: Pill) => {
+    // toggle nutritional information
+    if (pill.id === "nutrition") {
+      setShowNutrition(prev => !prev);
+      return;
+    }
+    else {
+      setShowNutrition(false);
+    }
+
     if (pill.id === "alt") {
       // Cycle to the next round of 3 meals, wrapping back to round 0 after the last
       setRoundIdx((prev) => (prev + 1) % numRounds);
@@ -281,43 +296,77 @@ export default function EatAI() {
             </View>
           ) : currentMeal ? (
             <View>
-              <Text style={styles.summaryText}>
-                {summary || buildSummary(currentMeal, user?.constraints)}
-              </Text>
+              <FlatList
+                data={currentRoundMeals}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(_, index) => index.toString()}
+                onMomentumScrollEnd={(event) => {
+                  const index = Math.round(
+                    event.nativeEvent.contentOffset.x / SCREEN_WIDTH
+                  );
+                  setMealIdx(index);
+                }}
+                renderItem={({ item: meal }) => {
+                  const mealItems = meal.items ?? [];
 
-              {/* Heart / save button */}
-              {(() => {
-                const isSaved = savedKeys.has(currentMeal.item_ids.join(",") );
-                return (
-                  <TouchableOpacity
-                    style={styles.heartButton}
-                    onPress={handleSaveMeal}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons
-                      name={isSaved ? "heart" : "heart-outline"}
-                      size={22}
-                      color={isSaved ? "#ff2975" : "#555"}
-                    />
-                    <Text style={[styles.heartLabel, isSaved && styles.heartLabelSaved]}>
-                      {isSaved ? "Saved" : "Save meal"}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })()}
+                  return (
+                    <View style={{ width: SCREEN_WIDTH }}>
+                      <Text style={styles.summaryText}>
+                        {summary || buildSummary(meal, user?.constraints)}
+                      </Text>
 
-              {currentItems.map((item) => (
-                <ItemCard
-                  key={item.item_id}
-                  name={item.menu_item_name}
-                  category={item.category}
-                  price={item.price}
-                  calories={item.calories}
-                  protein={item.protein}
-                  image_url={imageURL}
-                  onPress={() => router.push(`/item/${encodeURIComponent(restaurantName)}/${encodeURIComponent(item.item_id)}?source=eatai`)}
-                />
-              ))}
+                      {/* Heart / save button */}
+                      {(() => {
+                        const isSaved = savedKeys.has(meal.item_ids.join(","));
+
+                        return (
+                          <TouchableOpacity
+                            style={styles.heartButton}
+                            onPress={handleSaveMeal}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons
+                              name={isSaved ? "heart" : "heart-outline"}
+                              size={22}
+                              color={isSaved ? "#ff2975" : "#555"}
+                            />
+
+                            <Text
+                              style={[
+                                styles.heartLabel,
+                                isSaved && styles.heartLabelSaved,
+                              ]}
+                            >
+                              {isSaved ? "Saved" : "Save meal"}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })()}
+
+                      {mealItems.map((item) => (
+                        <ItemCard
+                          key={item.item_id}
+                          name={item.menu_item_name}
+                          category={item.category}
+                          price={item.price}
+                          calories={item.calories}
+                          protein={item.protein}
+                          image_url={imageURL}
+                          onPress={() =>
+                            router.push(
+                              `/item/${encodeURIComponent(
+                                restaurantName
+                              )}/${encodeURIComponent(item.item_id)}?source=eatai`
+                            )
+                          }
+                        />
+                      ))}
+                    </View>
+                  );
+                }}
+              />
 
               {currentRoundMeals.length > 1 && (
                 <View style={styles.dotsRow}>
@@ -328,26 +377,74 @@ export default function EatAI() {
                   ))}
                 </View>
               )}
+
+              {/* Nutrition breakdown section */}
+              {showNutrition && (
+                <View style={styles.nutritionalBreakdown}>
+                  <FlatList
+                    data={currentRoundMeals}
+                    horizontal
+                    pagingEnabled
+                    showsHorizontalScrollIndicator={false}
+                    keyExtractor={(_, index) => `nutrition-${index}`}
+                    onMomentumScrollEnd={(event) => {
+                      const index = Math.round(
+                        event.nativeEvent.contentOffset.x / SCREEN_WIDTH
+                      );
+                      setNutritionIdx(index);
+                    }}
+                    renderItem={({ item: meal, index }) => (
+                      <View style={{ width: SCREEN_WIDTH }}>
+                        <Text style={styles.mealLabel}>
+                          Recommendation #{index + 1}
+                        </Text>
+
+                        <NutritionCard meal={meal} />
+                      </View>
+                    )}
+                  />
+
+                  {currentRoundMeals.length > 1 && (
+                    <View style={styles.dotsRow}>
+                      {currentRoundMeals.map((_, i) => (
+                        <TouchableOpacity
+                          key={i}
+                          onPress={() => setNutritionIdx(i)}
+                        >
+                          <View
+                            style={[
+                              styles.dot,
+                              i === nutritionIdx && styles.dotActive,
+                            ]}
+                          />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              )}
             </View>
           ) : (
             <View style={styles.loadingContainer}>
               <Text style={styles.loadingText}>No meals found. Try a different option.</Text>
             </View>
           )}
+
+          {/* Follow-up pills + hamburger (results state only) */}
+          <View style={styles.bottomArea}>
+            {hasGenerated && !loading && (
+              <View style={styles.followUpRow}>
+                <PillRow
+                  pills={FOLLOW_UP_PILLS.filter((p) => p.id !== "alt" || numRounds > 1)}
+                  onPress={handlePill}
+                />
+              </View>
+            )}
+          </View>
         </ScrollView>
 
         {/* ── BOTTOM BAR ── */}
         <View style={[styles.bottomArea, { paddingBottom: insets.bottom + 8 }]}>
-          {/* Follow-up pills + hamburger (results state only) */}
-          {hasGenerated && !loading && (
-            <View style={styles.followUpRow}>
-              <PillRow
-                pills={FOLLOW_UP_PILLS.filter((p) => p.id !== "alt" || numRounds > 1)}
-                onPress={handlePill}
-              />
-            </View>
-          )}
-
           {/* Prompt bar */}
           <View style={styles.promptBar}>
             <View style={styles.inputContainer}>
@@ -560,5 +657,16 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     justifyContent: "center",
     alignItems: "center",
+  },
+  nutritionalBreakdown: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  mealLabel : {
+    color: "white",
+    fontSize: 14,
+    fontWeight: 600,
+    marginLeft: 16,
+    marginBottom: 10,
   },
 });
