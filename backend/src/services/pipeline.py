@@ -32,7 +32,7 @@ class PipelineService:
                 build_full=bool(seed_item))
             
             ranked = solver.score_and_rank_meals(user, meals)
-            return ranked[:3]
+            return ranked[:9]
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Pipeline error: {str(e)}")
         

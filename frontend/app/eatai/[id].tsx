@@ -13,6 +13,7 @@ import TargetModal from "../../components/TargetModal";
 import { useMenu } from "../../hooks/useMenu";
 import { useUser } from "../../context/UserContext";
 import { getRecommendations } from "../../api/recommend";
+import { saveMeal, unsaveMeal } from "../../api/meals";
 import { getItem } from "../../api/item";
 import { Meal } from "../../types/Meal";
 import { MenuItem } from "../../api/menu";
@@ -123,7 +124,9 @@ export default function EatAI() {
   const [loading, setLoading]               = useState(false);
   const [meals, setMeals]                   = useState<Meal[]>([]);
   const [summary, setSummary]               = useState("");
-  const [currentIdx, setCurrentIdx]         = useState(0);
+  const [roundIdx, setRoundIdx]             = useState(0);  // which group of 3 (0,1,2)
+  const [mealIdx, setMealIdx]               = useState(0);  // which meal within the round
+  const [savedKeys, setSavedKeys]           = useState<Map<string, number>>(new Map());
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [hasGenerated, setHasGenerated]     = useState(false);
 
@@ -134,7 +137,12 @@ export default function EatAI() {
       .catch(() => {});
   }, [seed, restaurantName]);
 
-  const currentMeal = (meals ?? [])[currentIdx] ?? null;
+  const ROUND_SIZE = 3;
+  // How many full-or-partial rounds of 3 we have, capped at 3
+  const numRounds = Math.min(3, Math.ceil((meals ?? []).length / ROUND_SIZE)) || 1;
+  // The 3 meals for the current round (may be fewer if not enough meals)
+  const currentRoundMeals = (meals ?? []).slice(roundIdx * ROUND_SIZE, (roundIdx + 1) * ROUND_SIZE);
+  const currentMeal = currentRoundMeals[mealIdx] ?? null;
   const currentItems = currentMeal?.items ?? [];
 
   const handleGenerate = async (categories = ["Entree", "Side", "Drink"]) => {
@@ -148,7 +156,8 @@ export default function EatAI() {
       );
       setMeals(recommendations ?? []);
       setSummary(llmSummary ?? "");
-      setCurrentIdx(0);
+      setRoundIdx(0);
+      setMealIdx(0);
     } catch {
       setMeals([]);
     } finally {
@@ -157,8 +166,10 @@ export default function EatAI() {
   };
 
   const handlePill = (pill: Pill) => {
-    if (pill.id === "alt" && meals.length > 1) {
-      setCurrentIdx((prev) => (prev + 1) % meals.length);
+    if (pill.id === "alt") {
+      // Cycle to the next round of 3 meals, wrapping back to round 0 after the last
+      setRoundIdx((prev) => (prev + 1) % numRounds);
+      setMealIdx(0);
       return;
     }
 
@@ -176,6 +187,21 @@ export default function EatAI() {
     }
 
     handleGenerate(PILL_CATEGORIES[pill.id] ?? ["Entree", "Side", "Drink"]);
+  };
+
+  const handleSaveMeal = async () => {
+    if (!token || !currentMeal) return;
+    const key = currentMeal.item_ids.join(",");
+    try {
+      if (savedKeys.has(key)) {
+        const savedIndex = savedKeys.get(key)!;
+        await unsaveMeal(savedIndex, token);
+        setSavedKeys((prev) => { const next = new Map(prev); next.delete(key); return next; });
+      } else {
+        const { saved_count } = await saveMeal(currentMeal, token);
+        setSavedKeys((prev) => new Map(prev).set(key, saved_count - 1));
+      }
+    } catch {}
   };
 
   const handleSend = () => { if (prompt.trim()) handleGenerate(); };
@@ -259,6 +285,27 @@ export default function EatAI() {
                 {summary || buildSummary(currentMeal, user?.constraints)}
               </Text>
 
+              {/* Heart / save button */}
+              {(() => {
+                const isSaved = savedKeys.has(currentMeal.item_ids.join(",") );
+                return (
+                  <TouchableOpacity
+                    style={styles.heartButton}
+                    onPress={handleSaveMeal}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name={isSaved ? "heart" : "heart-outline"}
+                      size={22}
+                      color={isSaved ? "#ff2975" : "#555"}
+                    />
+                    <Text style={[styles.heartLabel, isSaved && styles.heartLabelSaved]}>
+                      {isSaved ? "Saved" : "Save meal"}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })()}
+
               {currentItems.map((item) => (
                 <ItemCard
                   key={item.item_id}
@@ -272,11 +319,11 @@ export default function EatAI() {
                 />
               ))}
 
-              {meals.length > 1 && (
+              {currentRoundMeals.length > 1 && (
                 <View style={styles.dotsRow}>
-                  {meals.map((_, i) => (
-                    <TouchableOpacity key={i} onPress={() => setCurrentIdx(i)}>
-                      <View style={[styles.dot, i === currentIdx && styles.dotActive]} />
+                  {currentRoundMeals.map((_, i) => (
+                    <TouchableOpacity key={i} onPress={() => setMealIdx(i)}>
+                      <View style={[styles.dot, i === mealIdx && styles.dotActive]} />
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -294,7 +341,10 @@ export default function EatAI() {
           {/* Follow-up pills + hamburger (results state only) */}
           {hasGenerated && !loading && (
             <View style={styles.followUpRow}>
-              <PillRow pills={FOLLOW_UP_PILLS} onPress={handlePill} />
+              <PillRow
+                pills={FOLLOW_UP_PILLS.filter((p) => p.id !== "alt" || numRounds > 1)}
+                onPress={handlePill}
+              />
             </View>
           )}
 
@@ -408,6 +458,23 @@ const styles = StyleSheet.create({
   loadingText: {
     color: "#555",
     fontSize: 14,
+  },
+
+  /* Save button */
+  heartButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 20,
+    marginBottom: 12,
+  },
+  heartLabel: {
+    color: "#555",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  heartLabelSaved: {
+    color: "#ff2975",
   },
 
   /* Result */
