@@ -140,7 +140,7 @@ export default function Profile() {
           <ActivityIndicator color="white" style={{ marginTop: 40 }} />
         ) : savedMeals.length === 0 ? (
           <View style={styles.empty}>
-            <Ionicons name="heart-outline" size={36} color="#333" />
+            <Ionicons name="heart-outline" size={36} color="#a6a6a6" />
             <Text style={styles.emptyText}>No saved meals yet</Text>
             <Text style={styles.emptySubtext}>Heart a meal on the EatAI page to save it here</Text>
           </View>
@@ -170,12 +170,12 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   emptyText: {
-    color: "#555",
+    color: "#cdcdcd",
     fontSize: 16,
     fontWeight: "600",
   },
   emptySubtext: {
-    color: "#333",
+    color: "#a6a6a6",
     fontSize: 13,
     textAlign: "center",
     paddingHorizontal: 40,
