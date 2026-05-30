@@ -281,6 +281,7 @@ def recommend(req: RecommendRequest, credentials=Depends(security), conn=Depends
 
     index_to_item = {
         item["index"]: {
+            "index":          item["index"],
             "item_id":        item["item_id"],
             "menu_item_name": item["menu_item_name"],
             "category":       item["category"],

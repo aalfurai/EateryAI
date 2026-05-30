@@ -24,8 +24,13 @@ export default function NutritionCard({ meal }: Props) {
   return(
     <View style={styles.card}>
       <Text style={styles.title}>Items</Text>
-      {mealItems.map((item) => (
-        <Text style={styles.items}>{`${item.menu_item_name}`}</Text>
+      {mealItems.map((item, idx) => (
+        <Text 
+          key={`${item.index}-${idx}`}
+          style={styles.items}
+        >
+          {`${item.menu_item_name}`}
+        </Text>
       ))}
 
       <View style={styles.nutritionTable}>

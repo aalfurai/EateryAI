@@ -48,7 +48,7 @@ const PILL_CATEGORIES: Record<string, string[]> = {
   alt:     ["Entree", "Side", "Drink"],
 };
 
-function resolveItems(ids: string[], menuItems: MenuItem[]): MenuItem[] {
+function resolveItems(ids: number[], menuItems: MenuItem[]): MenuItem[] {
   return ids.flatMap((id) => {
     const item = menuItems.find((m) => String(m.index) === String(id));
     return item ? [item] : [];
@@ -345,9 +345,9 @@ export default function EatAI() {
                         );
                       })()}
 
-                      {mealItems.map((item) => (
+                      {mealItems.map((item, idx) => (
                         <ItemCard
-                          key={item.item_id}
+                          key={`${item.index}-${idx}`}
                           name={item.menu_item_name}
                           category={item.category}
                           price={item.price}
@@ -663,7 +663,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   mealLabel : {
-    color: "white",
+    color: "#dbdbdb",
     fontSize: 14,
     fontWeight: 600,
     marginLeft: 16,

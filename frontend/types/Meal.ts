@@ -1,10 +1,10 @@
 export type Meal = {
-  item_ids: string[];
-  Entree_ids: string[];
-  Side_ids: string[];
-  Drink_ids: string[];
-  Addon_ids: string[];
-  Dessert_ids: string[];
+  item_ids: number[];
+  Entree_ids: number[];
+  Side_ids: number[];
+  Drink_ids: number[];
+  Addon_ids: number[];
+  Dessert_ids: number[];
   total_price: number;
   total_cal: number;
   total_protein: number;
@@ -19,6 +19,6 @@ export type Meal = {
   addon_cal: number;
   filled_categories: string[];
   golden_ratio: number;
-  items: { item_id: string; menu_item_name: string; category: string; price: number; calories: number; protein: number }[];
+  items: { index: number; item_id: string; menu_item_name: string; category: string; price: number; calories: number; protein: number }[];
   restaurant_name?: string;
 };
