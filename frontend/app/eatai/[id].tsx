@@ -1,6 +1,7 @@
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Image
+  TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, 
+  Image, FlatList, Dimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -13,10 +14,12 @@ import TargetModal from "../../components/TargetModal";
 import { useMenu } from "../../hooks/useMenu";
 import { useUser } from "../../context/UserContext";
 import { getRecommendations } from "../../api/recommend";
+import { saveMeal, unsaveMeal } from "../../api/meals";
 import { getItem } from "../../api/item";
 import { Meal } from "../../types/Meal";
 import { MenuItem } from "../../api/menu";
 import { getRestaurantImageURL } from "../../utils/imageURLs";
+import NutritionCard from "../../components/NutritionCard";
 
 type Pill = {
   id: string;
@@ -47,7 +50,7 @@ const PILL_CATEGORIES: Record<string, string[]> = {
 
 function resolveItems(ids: number[], menuItems: MenuItem[]): MenuItem[] {
   return ids.flatMap((id) => {
-    const item = menuItems.find((m) => m.index === id || Number(m.item_id) === id);
+    const item = menuItems.find((m) => String(m.index) === String(id));
     return item ? [item] : [];
   });
 }
@@ -122,9 +125,14 @@ export default function EatAI() {
   const [prompt, setPrompt]                 = useState("");
   const [loading, setLoading]               = useState(false);
   const [meals, setMeals]                   = useState<Meal[]>([]);
-  const [currentIdx, setCurrentIdx]         = useState(0);
+  const [summary, setSummary]               = useState("");
+  const [roundIdx, setRoundIdx]             = useState(0);  // which group of 3 (0,1,2)
+  const [mealIdx, setMealIdx]               = useState(0);  // which meal within the round
+  const [savedKeys, setSavedKeys]           = useState<Map<string, number>>(new Map());
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [hasGenerated, setHasGenerated]     = useState(false);
+  const [showNutrition, setShowNutrition]   = useState(false);
+  const [nutritionIdx, setNutritionIdx] = useState(0);
 
   useEffect(() => {
     if (!seed) return;
@@ -133,20 +141,29 @@ export default function EatAI() {
       .catch(() => {});
   }, [seed, restaurantName]);
 
-  const currentMeal  = meals[currentIdx] ?? null;
-  const currentItems = currentMeal ? getMealItems(currentMeal, menuItems) : [];
+  const ROUND_SIZE = 3;
+  // How many full-or-partial rounds of 3 we have, capped at 3
+  const numRounds = Math.min(3, Math.ceil((meals ?? []).length / ROUND_SIZE)) || 1;
+  // The 3 meals for the current round (may be fewer if not enough meals)
+  const currentRoundMeals = (meals ?? []).slice(roundIdx * ROUND_SIZE, (roundIdx + 1) * ROUND_SIZE);
+  const currentMeal = currentRoundMeals[mealIdx] ?? null;
+  const currentItems = currentMeal?.items ?? [];
+  const SCREEN_WIDTH = Dimensions.get("window").width;
 
   const handleGenerate = async (categories = ["Entree", "Side", "Drink"]) => {
     if (!token) return;
+    setShowNutrition(false);
     setLoading(true);
     setHasGenerated(true);
     try {
-      const { recommendations } = await getRecommendations(
-        { restaurant_name: restaurantName, categories, seed_id: seed ? decodeURIComponent(seed) : undefined },
+      const { recommendations, summary: llmSummary } = await getRecommendations(
+        { restaurant_name: restaurantName, categories, seed_id: seed ? decodeURIComponent(seed) : undefined, calories: seedItem?.calories },
         token,
       );
-      setMeals(recommendations);
-      setCurrentIdx(0);
+      setMeals(recommendations ?? []);
+      setSummary(llmSummary ?? "");
+      setRoundIdx(0);
+      setMealIdx(0);
     } catch {
       setMeals([]);
     } finally {
@@ -155,7 +172,51 @@ export default function EatAI() {
   };
 
   const handlePill = (pill: Pill) => {
+    // toggle nutritional information
+    if (pill.id === "nutrition") {
+      setShowNutrition(prev => !prev);
+      return;
+    }
+    else {
+      setShowNutrition(false);
+    }
+
+    if (pill.id === "alt") {
+      // Cycle to the next round of 3 meals, wrapping back to round 0 after the last
+      setRoundIdx((prev) => (prev + 1) % numRounds);
+      setMealIdx(0);
+      return;
+    }
+
+    // handle add side template: categories need to include current item/meal categories + side
+    if (pill.id === "side" && currentMeal) {
+      const currentCategories = new Set(currentMeal.items?.map((i) => i.category));
+      currentCategories.add("Side");
+      handleGenerate(Array.from(currentCategories));
+      return;
+    }
+    if (pill.id === "side" && !currentMeal && seedItem) {
+      const currentCategories = new Set<string>([seedItem.category, "Side"]);
+      handleGenerate(Array.from(currentCategories));
+      return;
+    }
+
     handleGenerate(PILL_CATEGORIES[pill.id] ?? ["Entree", "Side", "Drink"]);
+  };
+
+  const handleSaveMeal = async () => {
+    if (!token || !currentMeal) return;
+    const key = currentMeal.item_ids.join(",");
+    try {
+      if (savedKeys.has(key)) {
+        const savedIndex = savedKeys.get(key)!;
+        await unsaveMeal(savedIndex, token);
+        setSavedKeys((prev) => { const next = new Map(prev); next.delete(key); return next; });
+      } else {
+        const { saved_count } = await saveMeal(currentMeal, token);
+        setSavedKeys((prev) => new Map(prev).set(key, saved_count - 1));
+      }
+    } catch {}
   };
 
   const handleSend = () => { if (prompt.trim()) handleGenerate(); };
@@ -174,6 +235,16 @@ export default function EatAI() {
         style={styles.gradient}
       >
         <TargetModal visible={filtersVisible} onClose={() => setFiltersVisible(false)} />
+
+        <TouchableOpacity
+          onPress={() => setFiltersVisible(true)}
+          style={[
+            styles.floatingFiltersButton,
+            { bottom: insets.bottom + 80 }
+          ]}
+        >
+          <Ionicons name="options-outline" size={26} color="white" />
+        </TouchableOpacity>
 
         {/* ── SCROLL CONTENT ── */}
         <ScrollView
@@ -225,30 +296,131 @@ export default function EatAI() {
             </View>
           ) : currentMeal ? (
             <View>
-              <Text style={styles.summaryText}>
-                {buildSummary(currentMeal, user?.constraints)}
-              </Text>
+              <FlatList
+                data={currentRoundMeals}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(_, index) => index.toString()}
+                onMomentumScrollEnd={(event) => {
+                  const index = Math.round(
+                    event.nativeEvent.contentOffset.x / SCREEN_WIDTH
+                  );
+                  setMealIdx(index);
+                }}
+                renderItem={({ item: meal }) => {
+                  const mealItems = meal.items ?? [];
 
-              {currentItems.map((item) => (
-                <ItemCard
-                  key={item.item_id}
-                  name={item.menu_item_name}
-                  category={item.category}
-                  price={item.price}
-                  calories={item.calories}
-                  protein={item.protein}
-                  image_url={imageURL}
-                  onPress={() => router.push(`/item/${encodeURIComponent(restaurantName)}/${encodeURIComponent(item.item_id)}`)}
-                />
-              ))}
+                  return (
+                    <View style={{ width: SCREEN_WIDTH }}>
+                      <Text style={styles.summaryText}>
+                        {summary || buildSummary(meal, user?.constraints)}
+                      </Text>
 
-              {meals.length > 1 && (
+                      {/* Heart / save button */}
+                      {(() => {
+                        const isSaved = savedKeys.has(meal.item_ids.join(","));
+
+                        return (
+                          <TouchableOpacity
+                            style={styles.heartButton}
+                            onPress={handleSaveMeal}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons
+                              name={isSaved ? "heart" : "heart-outline"}
+                              size={22}
+                              color={isSaved ? "#ff2975" : "#555"}
+                            />
+
+                            <Text
+                              style={[
+                                styles.heartLabel,
+                                isSaved && styles.heartLabelSaved,
+                              ]}
+                            >
+                              {isSaved ? "Saved" : "Save meal"}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })()}
+
+                      {mealItems.map((item, idx) => (
+                        <ItemCard
+                          key={`${item.index}-${idx}`}
+                          name={item.menu_item_name}
+                          category={item.category}
+                          price={item.price}
+                          calories={item.calories}
+                          protein={item.protein}
+                          image_url={imageURL}
+                          onPress={() =>
+                            router.push(
+                              `/item/${encodeURIComponent(
+                                restaurantName
+                              )}/${encodeURIComponent(item.item_id)}?source=eatai`
+                            )
+                          }
+                        />
+                      ))}
+                    </View>
+                  );
+                }}
+              />
+
+              {currentRoundMeals.length > 1 && (
                 <View style={styles.dotsRow}>
-                  {meals.map((_, i) => (
-                    <TouchableOpacity key={i} onPress={() => setCurrentIdx(i)}>
-                      <View style={[styles.dot, i === currentIdx && styles.dotActive]} />
+                  {currentRoundMeals.map((_, i) => (
+                    <TouchableOpacity key={i} onPress={() => setMealIdx(i)}>
+                      <View style={[styles.dot, i === mealIdx && styles.dotActive]} />
                     </TouchableOpacity>
                   ))}
+                </View>
+              )}
+
+              {/* Nutrition breakdown section */}
+              {showNutrition && (
+                <View style={styles.nutritionalBreakdown}>
+                  <FlatList
+                    data={currentRoundMeals}
+                    horizontal
+                    pagingEnabled
+                    showsHorizontalScrollIndicator={false}
+                    keyExtractor={(_, index) => `nutrition-${index}`}
+                    onMomentumScrollEnd={(event) => {
+                      const index = Math.round(
+                        event.nativeEvent.contentOffset.x / SCREEN_WIDTH
+                      );
+                      setNutritionIdx(index);
+                    }}
+                    renderItem={({ item: meal, index }) => (
+                      <View style={{ width: SCREEN_WIDTH }}>
+                        <Text style={styles.mealLabel}>
+                          Recommendation #{index + 1}
+                        </Text>
+
+                        <NutritionCard meal={meal} />
+                      </View>
+                    )}
+                  />
+
+                  {currentRoundMeals.length > 1 && (
+                    <View style={styles.dotsRow}>
+                      {currentRoundMeals.map((_, i) => (
+                        <TouchableOpacity
+                          key={i}
+                          onPress={() => setNutritionIdx(i)}
+                        >
+                          <View
+                            style={[
+                              styles.dot,
+                              i === nutritionIdx && styles.dotActive,
+                            ]}
+                          />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
                 </View>
               )}
             </View>
@@ -257,30 +429,22 @@ export default function EatAI() {
               <Text style={styles.loadingText}>No meals found. Try a different option.</Text>
             </View>
           )}
+
+          {/* Follow-up pills + hamburger (results state only) */}
+          <View style={styles.bottomArea}>
+            {hasGenerated && !loading && (
+              <View style={styles.followUpRow}>
+                <PillRow
+                  pills={FOLLOW_UP_PILLS.filter((p) => p.id !== "alt" || numRounds > 1)}
+                  onPress={handlePill}
+                />
+              </View>
+            )}
+          </View>
         </ScrollView>
 
         {/* ── BOTTOM BAR ── */}
         <View style={[styles.bottomArea, { paddingBottom: insets.bottom + 8 }]}>
-          {/* Follow-up pills + hamburger (results state only) */}
-          {hasGenerated && !loading && (
-            <View style={styles.followUpRow}>
-              <PillRow pills={FOLLOW_UP_PILLS} onPress={handlePill} />
-              <TouchableOpacity onPress={() => setFiltersVisible(true)} style={styles.hamburger}>
-                <Ionicons name="menu" size={26} color="white" />
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* Hamburger alone in welcome state */}
-          {!hasGenerated && (
-            <TouchableOpacity
-              onPress={() => setFiltersVisible(true)}
-              style={styles.hamburgerRight}
-            >
-              <Ionicons name="menu" size={26} color="white" />
-            </TouchableOpacity>
-          )}
-
           {/* Prompt bar */}
           <View style={styles.promptBar}>
             <View style={styles.inputContainer}>
@@ -393,6 +557,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
+  /* Save button */
+  heartButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 20,
+    marginBottom: 12,
+  },
+  heartLabel: {
+    color: "#555",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  heartLabelSaved: {
+    color: "#ff2975",
+  },
+
   /* Result */
   summaryText: {
     color: "white",
@@ -431,10 +612,25 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   hamburger: {
-    paddingBottom: 2,
+    position: "absolute",
+    right: 16,
+    bottom: 100,
   },
   hamburgerRight: {
     alignSelf: "flex-end",
+  },
+  floatingFiltersButton: {
+    position: "absolute",
+    right: 16,
+    zIndex: 1000,
+
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+
+    backgroundColor: "rgba(40, 40, 40, 0.67)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   promptBar: {
     flexDirection: "row",
@@ -461,5 +657,16 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     justifyContent: "center",
     alignItems: "center",
+  },
+  nutritionalBreakdown: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  mealLabel : {
+    color: "#dbdbdb",
+    fontSize: 14,
+    fontWeight: 600,
+    marginLeft: 16,
+    marginBottom: 10,
   },
 });

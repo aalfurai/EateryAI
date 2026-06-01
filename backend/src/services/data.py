@@ -1,10 +1,11 @@
 import itertools
 import pandas as pd
 from fastapi import HTTPException
-from backend import queries
+from helpers import queries
 from schemas.user import User
 from schemas.restaurant import Restaurant
 from schemas.meal import Meal
+from collections import defaultdict
 
 
 class DataService:
@@ -104,7 +105,7 @@ class DataService:
         """
         rows = queries.get_menu_items_for_solver(conn, restaurant_id)
 
-        menu = {}
+        menu = defaultdict(list)
         entrees, sides, drinks, desserts, addons = [], [], [], [], []
         for idx, row in enumerate(rows):
             item = {
@@ -124,7 +125,7 @@ class DataService:
                 "total_fat":      int(row["total_fat"]),
                 "serving_size":   row["serving_size"],
             }
-            menu[idx] = item
+            menu[row["item_id"]].append(item)
             match item["category"]:
                 case "Entree":  entrees.append(item)
                 case "Side":    sides.append(item)

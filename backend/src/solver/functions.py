@@ -134,24 +134,28 @@ def score_and_rank_meals(user: User, results: list, k=50, lambda_div=0.3) -> pd.
     result['filled_categories'] = result['filled_categories'].apply(list)
     return result.to_dict(orient='records')
 
-def get_entree_combos(seed_id, entree_combos, is_entree):
+def get_entree_combos(seed_id, entree_combos, is_entree, menu):
     if is_entree:
-        return entree_combos[entree_combos['entree_ids'].apply(lambda ids: seed_id in ids)]
+        matches = menu.get(seed_id, [])
+        if not matches:
+            return entree_combos.iloc[0:0]
+        seed_index = matches[0]['index']
+        return entree_combos[entree_combos['entree_ids'].apply(lambda ids: seed_index in ids)]
     return entree_combos
 
 def get_cand_items(seed_id, category, 
                    entree_combos=None, sides=None, drinks=None, desserts=None, addons=None, 
-                   is_entree=False):
+                   is_entree=False, menu=None):
     
     if category == 'Entree':
-        return get_entree_combos(seed_id, entree_combos, is_entree)
+        return get_entree_combos(seed_id, entree_combos, is_entree, menu)
     elif category == 'Side':
         return sides
     elif category == 'Drink':
         return drinks
     elif category == "Dessert":
         return desserts
-    elif category == "Add-on":
+    elif category == "Addon":
         return addons
 
 def intermediate_prune(user: User, meals, k=100):
@@ -185,12 +189,25 @@ def intermediate_prune(user: User, meals, k=100):
     top_k_indices = sorted(range(len(scores)), key=lambda i: scores[i])[:k]
     return [meals[i] for i in top_k_indices], [scores[i] for i in top_k_indices]
 
+def normalize_category(category: str) -> str:
+    mapping = {
+        "Add-on": "Addon",
+        "Add-On": "Addon",
+        "Addon": "Addon",
+    }
+    return mapping.get(category, category)
 
 def build_meal(user: User, seed_id, required_categories, restaurant: Restaurant, 
                entree_combos=None, sides=None, drinks=None, desserts=None, addons=None,
                build_full=True) -> list[Meal]:
     PRICE_TOL = round(user.constraints.price * 0.15, 2)
     CAL_TOL = math.ceil(user.constraints.calories * 0.10)
+
+    # normalize required categories
+    required_categories = {
+        normalize_category(cat)
+        for cat in required_categories
+    }
 
     current_meals = []
     if seed_id == None:
@@ -203,13 +220,15 @@ def build_meal(user: User, seed_id, required_categories, restaurant: Restaurant,
         seed_item = restaurant.get_item(seed_id)
         category = seed_item.get('category')
 
+        category = normalize_category(seed_item.get('category'))
+
         is_entree = (category == 'Entree')
         is_drink = (category == 'Drink')
-        is_addon = (category == 'Add-on')
+        is_addon = (category == 'Addon')
 
         # if the item is an entree, get all entree combos
         if is_entree and build_full:
-            candidate_entrees = get_entree_combos(seed_id=seed_id, entree_combos=entree_combos, is_entree=is_entree)
+            candidate_entrees = get_entree_combos(seed_id=seed_id, entree_combos=entree_combos, is_entree=is_entree, menu=restaurant.menu)
             for _, combo in candidate_entrees.iterrows():
                 meal_state = Meal(
                     item_ids = list(combo['entree_ids']),
@@ -235,7 +254,7 @@ def build_meal(user: User, seed_id, required_categories, restaurant: Restaurant,
                 current_meals.append(meal_state)
         else:
             meal_state = Meal(
-                item_ids = [seed_id],
+                item_ids = [seed_item['index']],
                 Entree_ids = [],
                 Side_ids = [],
                 Drink_ids = [],
@@ -251,11 +270,11 @@ def build_meal(user: User, seed_id, required_categories, restaurant: Restaurant,
                 total_carbohydrates = seed_item.get('total_carbohydrates'),
                 total_potassium = seed_item.get('potassium'),
                 total_fat = seed_item.get('total_fat'),
-                filled_categories = {seed_item.get('meal_category')},
+                filled_categories = {seed_item.get('category')},
                 drink_cal = 0,
                 addon_cal = 0
             )
-            getattr(meal_state, f"{category}_ids").append(seed_id)
+            getattr(meal_state, f"{category}_ids").append(seed_item.get('index'))
 
             if is_drink:
                 meal_state.drink_cal = seed_item.get('calories')
@@ -264,44 +283,49 @@ def build_meal(user: User, seed_id, required_categories, restaurant: Restaurant,
 
             current_meals.append(meal_state)
 
-    filled = current_meals[0].filled_categories
+    filled = current_meals[-1].filled_categories
 
     ordered_missing = [
-        cat for cat in ["Entree", "Side", "Drink", "Add-on", "Dessert"]
+        cat for cat in ["Entree", "Side", "Drink", "Addon", "Dessert"]
         if cat in required_categories and cat not in filled
     ]
 
     for category in ordered_missing:
         new_meals = []
+
         cand_items = get_cand_items(seed_id=seed_id, category=category, 
                                     entree_combos=entree_combos, 
                                     sides=sides, 
                                     drinks=drinks,
                                     desserts=desserts,
                                     addons=addons,
-                                    is_entree=is_entree)
+                                    is_entree=is_entree,
+                                    menu=restaurant.menu)
+                
         if cand_items is None or cand_items.empty:
             continue
         
         for meal in current_meals:
-            cand_items = cand_items[
+            filtered_items = cand_items[
                 (meal.total_price + cand_items['price'] <= user.constraints.price + PRICE_TOL) &
                 (meal.total_cal + cand_items['calories'] <= user.constraints.calories + CAL_TOL)
             ]
 
-            for _, item in cand_items.iterrows():
+            for _, item in filtered_items.iterrows():
                 new_meal: Meal = copy.deepcopy(meal)
                 
                 if category == 'Entree':
                     new_meal.item_ids.extend(list(item['entree_ids']))
                     new_meal.Entree_ids.extend(list(item['entree_ids']))
                 else:
+                    if category == 'Add-on':
+                        category = 'Addon'  # adjust for naming consistency
                     new_meal.item_ids.append(item['index'])
                     getattr(new_meal, f"{category}_ids").append(item['index'])
 
                 if category == 'Drink':
                     new_meal.drink_cal += item['calories']
-                elif category == 'Add-on':
+                elif category == 'Addon':
                     new_meal.addon_cal += item['calories']
                 
                 new_meal.total_price += item['price']

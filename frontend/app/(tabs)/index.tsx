@@ -27,12 +27,13 @@ export default function Home() {
   } = useRestaurantSearch(searchQuery);
 
   const defaultRestaurants = [
+    "McDonald's",
     "Chick-fil-A",
     "Taco Bell",
-    "Subway",
-    "Chipotle",
-    "McDonald's",
+    "Wendy's",
     "Arby's",
+    "Burger King",
+    "Panera Bread",
   ];
 
   const featuredRestaurants = restaurants.filter((restaurant) =>

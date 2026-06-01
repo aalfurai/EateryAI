@@ -19,4 +19,6 @@ export type Meal = {
   addon_cal: number;
   filled_categories: string[];
   golden_ratio: number;
+  items: { index: number; item_id: string; menu_item_name: string; category: string; price: number; calories: number; protein: number }[];
+  restaurant_name?: string;
 };

@@ -2,7 +2,9 @@
 */node_modules/
 .DS_Store
 .installed
+.vscode
 nul
+data/logs/*.txt
 
 # Recategorization Files
 *corrected_category.json
@@ -215,3 +217,4 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+backend/data/logs/*
