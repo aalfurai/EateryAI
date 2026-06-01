@@ -7,7 +7,7 @@ from schemas import User, Restaurant, Meal
 
 def score_and_rank_meals(user: User, results: list, k=50, lambda_div=0.3) -> pd.DataFrame:
     # NOTE: Need a fallback if no meals found
-    if not results:
+    if results is None or len(results)==0:
         print("ERROR: NO MEALS TO SCORE")
         return pd.DataFrame()  # return empty DataFrame if no meals
     df_candidate_meals = pd.DataFrame(results)
@@ -27,7 +27,13 @@ def score_and_rank_meals(user: User, results: list, k=50, lambda_div=0.3) -> pd.
         .clip(lower=0)
         / constraints.calories
     )
-    
+
+    df_candidate_meals['cal_deficit'] = (
+        (constraints.calories - df_candidate_meals['total_cal'])
+        .clip(lower=0)
+        / constraints.calories
+    )
+
     df_candidate_meals['protein_deficit'] = (
         (constraints.protein - df_candidate_meals['total_protein'])
         .clip(lower=0)
@@ -61,10 +67,12 @@ def score_and_rank_meals(user: User, results: list, k=50, lambda_div=0.3) -> pd.
     else:
         df_candidate_meals['sodium_norm'] = (df_candidate_meals['total_sodium'] - sodium_min) / (sodium_max - sodium_min)
 
+    # TODO get calorie deficit as well as excess
     # lower score is better
     df_candidate_meals['score'] = (
         weights.protein * df_candidate_meals['protein_deficit'] +
-        weights.calories * df_candidate_meals['cal_excess'] +
+        weights.cal_surplus * df_candidate_meals['cal_excess'] +
+        weights.cal_deficit * df_candidate_meals['cal_deficit'] +
         weights.price * df_candidate_meals['price_excess'] -
         weights.fiber * df_candidate_meals['fiber_norm'] +
         weights.sugar * df_candidate_meals['sugars_norm'] +
@@ -153,6 +161,7 @@ def intermediate_prune(user: User, meals, k=100):
     for meal in meals:
         price_excess = max(0, meal.total_price - constraints.price) / constraints.price
         cal_excess = max(0, meal.total_cal - constraints.calories) / constraints.calories
+        cal_deficit = max(0, constraints.calories - meal.total_cal) / constraints.calories
         protein_deficit = max(0, constraints.protein - meal.total_protein) / constraints.protein
 
         drink_penalty = meal.drink_cal / constraints.calories
@@ -162,7 +171,8 @@ def intermediate_prune(user: User, meals, k=100):
 
         score = (
             weights.price * price_excess +
-            weights.calories * cal_excess +
+            weights.cal_surplus * cal_excess +
+            weights.cal_deficit * cal_deficit + 
             weights.protein * protein_deficit +
             weights.drink_cal * drink_penalty +
             weights.addon_cal * addon_penalty -

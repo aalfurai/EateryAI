@@ -29,7 +29,7 @@ class PipelineService:
                 drinks=restaurant.drinks,
                 desserts=restaurant.desserts,
                 addons=restaurant.addons,
-                build_full=bool(seed_item))
+                build_full=seed_item is not None)
             
             ranked = solver.score_and_rank_meals(user, meals)
             return ranked[:9]
