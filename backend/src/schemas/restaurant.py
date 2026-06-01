@@ -39,6 +39,7 @@ class Restaurant:
             for item in items:
                 if calories and item.get("calories") == calories:
                     return item
+            return items[0]
 
     def get_by_category(self, category: str) -> list:
         """Get all items for a given meal category."""
