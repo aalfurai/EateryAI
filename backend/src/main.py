@@ -2,7 +2,7 @@ import time
 from fastapi import FastAPI, Depends, Request, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from schemas.user import User
-from schemas.requests import RecommendRequest, ConstraintsRequest, WeightsRequest, SaveMealRequest, LoginRequest, RegisterRequest
+from schemas.requests import RecommendRequest, ConstraintsRequest, WeightsRequest, SaveMealRequest, LoginRequest, RegisterRequest, ResetWeightsRequest
 from config.security import create_token, decode_token
 from config.dependencies import pipeline, security, data_service
 from services.llm import generate_meal_summary
@@ -343,7 +343,42 @@ def recommend(req: RecommendRequest, credentials=Depends(security), conn=Depends
 
 
 
+# ─────────────────────────────────────────────
+# Preference Learning
+# ─────────────────────────────────────────────
 
-# click meal - weak
-# log meal - strong
-    # need meal info
+@app.post("/users/log-meal", tags=["Preference Learning"])
+def log_meal(req: SaveMealRequest, credentials=Depends(security)):
+    """
+    Strong preference update from a meal the user logged/ate.
+    Corresponds to the 'Save Meal' action on the meal detail screen.
+    """
+    user_id = decode_token(credentials.credentials)
+    user = data_service.load_user(user_id)
+    user.strong_update(req.meal)
+    return {"message": "Weights updated (strong)", "weights": user.weights.to_dict()}
+
+
+@app.post("/users/click-meal", tags=["Preference Learning"])
+def click_meal(req: SaveMealRequest, credentials=Depends(security)):
+    """
+    Weak preference update from a meal the user clicked/viewed.
+    Corresponds to tapping into a meal recommendation card.
+    """
+    user_id = decode_token(credentials.credentials)
+    user = data_service.load_user(user_id)
+    user.weak_update(req.meal)
+    return {"message": "Weights updated (weak)", "weights": user.weights.to_dict()}
+
+
+@app.post("/users/reset-weights", tags=["Preference Learning"])
+def reset_weights(req: ResetWeightsRequest, credentials=Depends(security)):
+    """
+    Reset weights to a named profile preset.
+    Corresponds to a 'Reset Preferences' option on the Profile screen.
+    Profile options: 'default' | 'bulking' | 'cutting' | 'budget'
+    """
+    user_id = decode_token(credentials.credentials)
+    user = data_service.load_user(user_id)
+    user.reset_weights(req.profile)
+    return {"message": f"Weights reset to '{req.profile}' profile", "weights": user.weights.to_dict()}

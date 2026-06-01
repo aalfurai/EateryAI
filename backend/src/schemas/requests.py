@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from schemas.constraints import Constraints
 from schemas.weights import Weights
 from schemas.meal import Meal
+from typing import Literal
     
 class LoginRequest(BaseModel):
     user_id: str
@@ -24,12 +25,14 @@ class ConstraintsRequest(BaseModel):
     calories: int | None = None
     protein: int | None = None
     price_tol_pct: float | None = None
-    calories_tol_pct: float | None = None
+    cal_sur_tol_pct: float | None = None
+    cal_def_tol_pct: float | None = None
     protein_tol_pct: float | None = None
 
 class WeightsRequest(BaseModel):
     price: float | None = None
-    calories: float | None = None
+    cal_surplus: float | None = None
+    cal_deficit: float | None = None
     protein: float | None = None
     fiber: float | None = None
     sugar: float | None = None
@@ -39,3 +42,6 @@ class WeightsRequest(BaseModel):
 
 class SaveMealRequest(BaseModel):
     meal: Meal
+
+class ResetWeightsRequest(BaseModel):
+    profile: Literal["default", "bulking", "cutting", "budget"] = "default"

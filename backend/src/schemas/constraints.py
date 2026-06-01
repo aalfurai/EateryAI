@@ -8,6 +8,7 @@ class Constraints:
     protein: int = 20
     
     # Tolerances: not sure if these will change
+    # these represent what meals can be included before pruning
     price_tol_pct: float = 0.20
     cal_sur_tol_pct: float = 0.10
     cal_def_tol_pct: float = 0.05
@@ -25,7 +26,7 @@ class Constraints:
             raise ValueError("Protein must be positive")
         if not (0 < self.price_tol_pct < 1):
             raise ValueError("Price tolerance must be between 0 and 1")
-        if not ((0 < self.cal_sur_tol_pct < 1) and (0 < self.cal_def_tol_prct < 1)):
+        if not ((0 < self.cal_sur_tol_pct < 1) and (0 < self.cal_def_tol_pct < 1)):
             raise ValueError("Calorie tolerance must be between 0 and 1")
         if not (0 < self.protein_tol_pct < 1):
             raise ValueError("Protein tolerance must be between 0 and 1")

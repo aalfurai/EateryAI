@@ -7,7 +7,7 @@ from schemas import User, Restaurant, Meal
 
 def score_and_rank_meals(user: User, results: list, k=50, lambda_div=0.3) -> pd.DataFrame:
     # NOTE: Need a fallback if no meals found
-    if not results:
+    if results is None or len(results)==0:
         print("ERROR: NO MEALS TO SCORE")
         return pd.DataFrame()  # return empty DataFrame if no meals
     df_candidate_meals = pd.DataFrame(results)
@@ -34,11 +34,6 @@ def score_and_rank_meals(user: User, results: list, k=50, lambda_div=0.3) -> pd.
         / constraints.calories
     )
 
-    if(df_candidate_meals['total_cal'] > constraints.calories):
-        df_candidate_meals['cal_deficit'] = 0
-    else:
-        df_candidate_meals['cal_excess'] = 0
-    
     df_candidate_meals['protein_deficit'] = (
         (constraints.protein - df_candidate_meals['total_protein'])
         .clip(lower=0)
