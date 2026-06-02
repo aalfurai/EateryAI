@@ -35,6 +35,11 @@ const WELCOME_PILLS: Pill[] = [
   { id: "side",    label: "Add Side",        icon: "nutrition-outline",  color: "#ffd600", bg: "rgba(255,214,0,0.12)" },
 ];
 
+const WELCOME_WITH_SIDE_PILLS: Pill[] = [
+  { id: "full",    label: "Build full meal", icon: "restaurant-outline", color: "#39ff14", bg: "rgba(57,255,20,0.12)"  },
+  { id: "protein", label: "Add Protein",     icon: "barbell-outline",    color: "#ffd600", bg: "rgba(255,214,0,0.12)" },
+];
+
 const FOLLOW_UP_PILLS: Pill[] = [
   { id: "alt",       label: "Alternative Meals",     icon: "swap-horizontal-outline", color: "#00eaff", bg: "rgba(0,234,255,0.12)"  },
   { id: "nutrition", label: "Nutritional Breakdown", icon: "bar-chart-outline",       color: "#00eaff", bg: "rgba(0,234,255,0.12)"  },
@@ -43,9 +48,7 @@ const FOLLOW_UP_PILLS: Pill[] = [
 
 const PILL_CATEGORIES: Record<string, string[]> = {
   full:    ["Entree", "Side", "Drink"],
-  protein: ["Entree"],
-  side:    ["Side"],
-  alt:     ["Entree", "Side", "Drink"],
+  protein: ["Entree"], // placeholder for add protein
 };
 
 function resolveItems(ids: number[], menuItems: MenuItem[]): MenuItem[] {
@@ -285,9 +288,15 @@ export default function EatAI() {
               <Text style={styles.welcomeLine2}>How should we begin?</Text>
 
               {/* Pills right below */}
-              <View style={styles.welcomePills}>
-                <PillRow pills={WELCOME_PILLS} onPress={handlePill} />
-              </View>
+              {seedItem?.category === "Side" ? (
+                <View style={styles.welcomePills}>
+                  <PillRow pills={WELCOME_WITH_SIDE_PILLS} onPress={handlePill} />
+                </View>
+              ) : (
+                <View style={styles.welcomePills}>
+                  <PillRow pills={WELCOME_PILLS} onPress={handlePill} />
+                </View>
+              )}
             </View>
           ) : loading ? (
             <View style={styles.loadingContainer}>
