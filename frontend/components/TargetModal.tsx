@@ -7,9 +7,10 @@ import TargetSlider from "./TargetSlider";
 type Props = {
   visible: boolean;
   onClose: () => void;
+  onTargetsApplied?: () => void;
 };
 
-export default function TargetModal({ visible, onClose, }: Props) {
+export default function TargetModal({ visible, onClose, onTargetsApplied }: Props) {
   const { user, updateConstraints } = useUser();
   const [draftPrice, setDraftPrice] = useState(0);
   const [draftCalories, setDraftCalories] = useState(0);
@@ -20,6 +21,8 @@ export default function TargetModal({ visible, onClose, }: Props) {
       calories: draftCalories,
       protein: draftProtein,
     });
+
+    onTargetsApplied?.();
 
     onClose();
   };

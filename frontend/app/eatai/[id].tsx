@@ -40,6 +40,10 @@ const WELCOME_WITH_SIDE_PILLS: Pill[] = [
   { id: "protein", label: "Add Protein",     icon: "barbell-outline",    color: "#ffd600", bg: "rgba(255,214,0,0.12)" },
 ];
 
+const REGENERATE_PILLS: Pill[] = [
+  { id: "full",    label: "Rebuild Meal",    icon: "refresh-outline",    color: "#39ff14", bg: "rgba(57,255,20,0.12)",  },
+];
+
 const FOLLOW_UP_PILLS: Pill[] = [
   { id: "alt",       label: "Alternative Meals",     icon: "swap-horizontal-outline", color: "#00eaff", bg: "rgba(0,234,255,0.12)"  },
   { id: "nutrition", label: "Nutritional Breakdown", icon: "bar-chart-outline",       color: "#00eaff", bg: "rgba(0,234,255,0.12)"  },
@@ -136,6 +140,7 @@ export default function EatAI() {
   const [hasGenerated, setHasGenerated]     = useState(false);
   const [showNutrition, setShowNutrition]   = useState(false);
   const [nutritionIdx, setNutritionIdx] = useState(0);
+  const [targetsDirty, setTargetsDirty] = useState(false);
   const mealListRef = useRef<FlatList>(null);
   const nutritionListRef = useRef<FlatList>(null);
 
@@ -181,6 +186,7 @@ export default function EatAI() {
       );
       setMeals(recommendations ?? []);
       setSummary(llmSummary ?? "");
+      setTargetsDirty(false);
       setRoundIdx(0);
       setMealIdx(0);
       setNutritionIdx(0);
@@ -256,7 +262,15 @@ export default function EatAI() {
         end={{ x: 0, y: 1 }}
         style={styles.gradient}
       >
-        <TargetModal visible={filtersVisible} onClose={() => setFiltersVisible(false)} />
+        <TargetModal 
+          visible={filtersVisible} 
+          onClose={() => setFiltersVisible(false)}
+          onTargetsApplied={() =>{
+            if (hasGenerated) {
+              setTargetsDirty(true);
+            }
+          }}
+        />
 
         <TouchableOpacity
           onPress={() => setFiltersVisible(true)}
@@ -462,16 +476,27 @@ export default function EatAI() {
           )}
 
           {/* Follow-up pills + hamburger (results state only) */}
-          <View style={styles.bottomArea}>
-            {hasGenerated && !loading && (
-              <View style={styles.followUpRow}>
+          {hasGenerated && !loading && (
+            <View style={styles.followUpRow}>
+              {/* If user changes their targets, show regenerate option */}
+              {targetsDirty && (
+                <Text style={styles.warningText}>
+                  Your meal targets changed. Rebuild recommendations to see updated meals.
+                </Text>
+              )}
+              {targetsDirty && (
                 <PillRow
-                  pills={FOLLOW_UP_PILLS.filter((p) => p.id !== "alt" || numRounds > 1)}
+                  pills={REGENERATE_PILLS}
                   onPress={handlePill}
                 />
-              </View>
-            )}
-          </View>
+              )}
+
+              <PillRow
+                pills={FOLLOW_UP_PILLS.filter((p) => p.id !== "alt" || numRounds > 1)}
+                onPress={handlePill}
+              />
+            </View>
+          )}
         </ScrollView>
 
         {/* ── BOTTOM BAR ── */}
@@ -638,8 +663,7 @@ const styles = StyleSheet.create({
     // transparent — gradient shows through
   },
   followUpRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
+    marginLeft: 18,
     gap: 10,
   },
   hamburger: {
@@ -700,4 +724,10 @@ const styles = StyleSheet.create({
     marginLeft: 16,
     marginBottom: 10,
   },
+  warningText : {
+    color: "#cfcfcf",
+    fontSize: 14,
+    fontWeight: 400,
+    marginBottom: 10,
+  }
 });
