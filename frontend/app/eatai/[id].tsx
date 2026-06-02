@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import EatAIHeader from "../../components/EatAIHeader";
@@ -136,6 +136,8 @@ export default function EatAI() {
   const [hasGenerated, setHasGenerated]     = useState(false);
   const [showNutrition, setShowNutrition]   = useState(false);
   const [nutritionIdx, setNutritionIdx] = useState(0);
+  const mealListRef = useRef<FlatList>(null);
+  const nutritionListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     if (!seed) return;
@@ -143,6 +145,20 @@ export default function EatAI() {
       .then(setSeedItem)
       .catch(() => {});
   }, [seed, restaurantName]);
+
+  useEffect(() => {
+    mealListRef.current?.scrollToIndex({
+      index: mealIdx,
+      animated: true,
+    });
+  }, [mealIdx]);
+
+  useEffect(() => {
+    nutritionListRef.current?.scrollToIndex({
+      index: nutritionIdx,
+      animated: true,
+    });
+  }, [nutritionIdx]);
 
   const ROUND_SIZE = 3;
   // How many full-or-partial rounds of 3 we have, capped at 3
@@ -167,6 +183,7 @@ export default function EatAI() {
       setSummary(llmSummary ?? "");
       setRoundIdx(0);
       setMealIdx(0);
+      setNutritionIdx(0);
     } catch {
       setMeals([]);
     } finally {
@@ -178,6 +195,7 @@ export default function EatAI() {
     // toggle nutritional information
     if (pill.id === "nutrition") {
       setShowNutrition(prev => !prev);
+      setNutritionIdx(0);
       return;
     }
     else {
@@ -188,6 +206,7 @@ export default function EatAI() {
       // Cycle to the next round of 3 meals, wrapping back to round 0 after the last
       setRoundIdx((prev) => (prev + 1) % numRounds);
       setMealIdx(0);
+      setNutritionIdx(0);
       return;
     }
 
@@ -288,15 +307,16 @@ export default function EatAI() {
               <Text style={styles.welcomeLine2}>How should we begin?</Text>
 
               {/* Pills right below */}
-              {seedItem?.category === "Side" ? (
-                <View style={styles.welcomePills}>
-                  <PillRow pills={WELCOME_WITH_SIDE_PILLS} onPress={handlePill} />
-                </View>
-              ) : (
-                <View style={styles.welcomePills}>
-                  <PillRow pills={WELCOME_PILLS} onPress={handlePill} />
-                </View>
-              )}
+              <View style={styles.welcomePills}>
+              <PillRow
+                pills={
+                  seedItem?.category === "Side"
+                    ? WELCOME_WITH_SIDE_PILLS
+                    : WELCOME_PILLS
+                }
+                onPress={handlePill}
+              />
+            </View>
             </View>
           ) : loading ? (
             <View style={styles.loadingContainer}>
@@ -306,6 +326,7 @@ export default function EatAI() {
           ) : currentMeal ? (
             <View>
               <FlatList
+                ref={mealListRef}
                 data={currentRoundMeals}
                 horizontal
                 pagingEnabled
@@ -354,7 +375,7 @@ export default function EatAI() {
                         );
                       })()}
 
-                      {mealItems.map((item, idx) => (
+                      {mealItems.map((item: any, idx: number) => (
                         <ItemCard
                           key={`${item.index}-${idx}`}
                           name={item.menu_item_name}
@@ -391,6 +412,7 @@ export default function EatAI() {
               {showNutrition && (
                 <View style={styles.nutritionalBreakdown}>
                   <FlatList
+                    ref={nutritionListRef}
                     data={currentRoundMeals}
                     horizontal
                     pagingEnabled
