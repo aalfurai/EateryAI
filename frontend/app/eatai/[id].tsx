@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import EatAIHeader from "../../components/EatAIHeader";
@@ -35,6 +35,15 @@ const WELCOME_PILLS: Pill[] = [
   { id: "side",    label: "Add Side",        icon: "nutrition-outline",  color: "#ffd600", bg: "rgba(255,214,0,0.12)" },
 ];
 
+const WELCOME_WITH_SIDE_PILLS: Pill[] = [
+  { id: "full",    label: "Build full meal", icon: "restaurant-outline", color: "#39ff14", bg: "rgba(57,255,20,0.12)"  },
+  { id: "protein", label: "Add Protein",     icon: "barbell-outline",    color: "#ffd600", bg: "rgba(255,214,0,0.12)" },
+];
+
+const REGENERATE_PILLS: Pill[] = [
+  { id: "full",    label: "Rebuild Meal",    icon: "refresh-outline",    color: "#39ff14", bg: "rgba(57,255,20,0.12)",  },
+];
+
 const FOLLOW_UP_PILLS: Pill[] = [
   { id: "alt",       label: "Alternative Meals",     icon: "swap-horizontal-outline", color: "#00eaff", bg: "rgba(0,234,255,0.12)"  },
   { id: "nutrition", label: "Nutritional Breakdown", icon: "bar-chart-outline",       color: "#00eaff", bg: "rgba(0,234,255,0.12)"  },
@@ -43,9 +52,7 @@ const FOLLOW_UP_PILLS: Pill[] = [
 
 const PILL_CATEGORIES: Record<string, string[]> = {
   full:    ["Entree", "Side", "Drink"],
-  protein: ["Entree"],
-  side:    ["Side"],
-  alt:     ["Entree", "Side", "Drink"],
+  protein: ["Entree"], // placeholder for add protein
 };
 
 function resolveItems(ids: number[], menuItems: MenuItem[]): MenuItem[] {
@@ -133,6 +140,9 @@ export default function EatAI() {
   const [hasGenerated, setHasGenerated]     = useState(false);
   const [showNutrition, setShowNutrition]   = useState(false);
   const [nutritionIdx, setNutritionIdx] = useState(0);
+  const [targetsDirty, setTargetsDirty] = useState(false);
+  const mealListRef = useRef<FlatList>(null);
+  const nutritionListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     if (!seed) return;
@@ -140,6 +150,20 @@ export default function EatAI() {
       .then(setSeedItem)
       .catch(() => {});
   }, [seed, restaurantName]);
+
+  useEffect(() => {
+    mealListRef.current?.scrollToIndex({
+      index: mealIdx,
+      animated: true,
+    });
+  }, [mealIdx]);
+
+  useEffect(() => {
+    nutritionListRef.current?.scrollToIndex({
+      index: nutritionIdx,
+      animated: true,
+    });
+  }, [nutritionIdx]);
 
   const ROUND_SIZE = 3;
   // How many full-or-partial rounds of 3 we have, capped at 3
@@ -162,8 +186,10 @@ export default function EatAI() {
       );
       setMeals(recommendations ?? []);
       setSummary(llmSummary ?? "");
+      setTargetsDirty(false);
       setRoundIdx(0);
       setMealIdx(0);
+      setNutritionIdx(0);
     } catch {
       setMeals([]);
     } finally {
@@ -175,6 +201,7 @@ export default function EatAI() {
     // toggle nutritional information
     if (pill.id === "nutrition") {
       setShowNutrition(prev => !prev);
+      setNutritionIdx(0);
       return;
     }
     else {
@@ -185,6 +212,7 @@ export default function EatAI() {
       // Cycle to the next round of 3 meals, wrapping back to round 0 after the last
       setRoundIdx((prev) => (prev + 1) % numRounds);
       setMealIdx(0);
+      setNutritionIdx(0);
       return;
     }
 
@@ -234,7 +262,15 @@ export default function EatAI() {
         end={{ x: 0, y: 1 }}
         style={styles.gradient}
       >
-        <TargetModal visible={filtersVisible} onClose={() => setFiltersVisible(false)} />
+        <TargetModal 
+          visible={filtersVisible} 
+          onClose={() => setFiltersVisible(false)}
+          onTargetsApplied={() =>{
+            if (hasGenerated) {
+              setTargetsDirty(true);
+            }
+          }}
+        />
 
         <TouchableOpacity
           onPress={() => setFiltersVisible(true)}
@@ -286,8 +322,15 @@ export default function EatAI() {
 
               {/* Pills right below */}
               <View style={styles.welcomePills}>
-                <PillRow pills={WELCOME_PILLS} onPress={handlePill} />
-              </View>
+              <PillRow
+                pills={
+                  seedItem?.category === "Side"
+                    ? WELCOME_WITH_SIDE_PILLS
+                    : WELCOME_PILLS
+                }
+                onPress={handlePill}
+              />
+            </View>
             </View>
           ) : loading ? (
             <View style={styles.loadingContainer}>
@@ -297,6 +340,7 @@ export default function EatAI() {
           ) : currentMeal ? (
             <View>
               <FlatList
+                ref={mealListRef}
                 data={currentRoundMeals}
                 horizontal
                 pagingEnabled
@@ -345,7 +389,7 @@ export default function EatAI() {
                         );
                       })()}
 
-                      {mealItems.map((item, idx) => (
+                      {mealItems.map((item: any, idx: number) => (
                         <ItemCard
                           key={`${item.index}-${idx}`}
                           name={item.menu_item_name}
@@ -382,6 +426,7 @@ export default function EatAI() {
               {showNutrition && (
                 <View style={styles.nutritionalBreakdown}>
                   <FlatList
+                    ref={nutritionListRef}
                     data={currentRoundMeals}
                     horizontal
                     pagingEnabled
@@ -431,16 +476,27 @@ export default function EatAI() {
           )}
 
           {/* Follow-up pills + hamburger (results state only) */}
-          <View style={styles.bottomArea}>
-            {hasGenerated && !loading && (
-              <View style={styles.followUpRow}>
+          {hasGenerated && !loading && (
+            <View style={styles.followUpRow}>
+              {/* If user changes their targets, show regenerate option */}
+              {targetsDirty && (
+                <Text style={styles.warningText}>
+                  Your meal targets changed. Rebuild recommendations to see updated meals.
+                </Text>
+              )}
+              {targetsDirty && (
                 <PillRow
-                  pills={FOLLOW_UP_PILLS.filter((p) => p.id !== "alt" || numRounds > 1)}
+                  pills={REGENERATE_PILLS}
                   onPress={handlePill}
                 />
-              </View>
-            )}
-          </View>
+              )}
+
+              <PillRow
+                pills={FOLLOW_UP_PILLS.filter((p) => p.id !== "alt" || numRounds > 1)}
+                onPress={handlePill}
+              />
+            </View>
+          )}
         </ScrollView>
 
         {/* ── BOTTOM BAR ── */}
@@ -607,8 +663,7 @@ const styles = StyleSheet.create({
     // transparent — gradient shows through
   },
   followUpRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
+    marginLeft: 18,
     gap: 10,
   },
   hamburger: {
@@ -669,4 +724,10 @@ const styles = StyleSheet.create({
     marginLeft: 16,
     marginBottom: 10,
   },
+  warningText : {
+    color: "#cfcfcf",
+    fontSize: 14,
+    fontWeight: 400,
+    marginBottom: 10,
+  }
 });
