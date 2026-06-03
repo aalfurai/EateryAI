@@ -30,10 +30,7 @@ app = FastAPI(title="EatAI API", version="1.0.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     # Browser-only (Expo web). Native Expo fetch does not use CORS. Origins must be scheme://host:port with no trailing slash.
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:8081",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -146,8 +143,10 @@ def get_saved_meals(credentials=Depends(security)):
 def save_meal(req: SaveMealRequest, credentials=Depends(security)):
     """Save a recommended meal to the user's profile."""
     user_id = decode_token(credentials.credentials)
+    user = data_service.load_user(user_id)
+    user.strong_update(req.meal)
     count = data_service.save_meal(user_id, req.meal)
-    return {"message": "Meal saved", "saved_count": count}
+    return {"message": "Meal saved", "saved_count": count, "weights": user.weights.to_dict()}
 
 
 @app.delete("/users/saved/{meal_index}", tags=["Saved Meals"])
