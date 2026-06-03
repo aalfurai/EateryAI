@@ -1,4 +1,6 @@
 import os
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from google import genai
 from dotenv import load_dotenv
 from schemas.user import User
@@ -6,15 +8,18 @@ from schemas.restaurant import Restaurant
 
 load_dotenv()
 
-_client = None
+_client: genai.Client | None = None
+_client_lock = threading.Lock()
 
 def _get_client() -> genai.Client:
     global _client
     if _client is None:
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            raise RuntimeError("GEMINI_API_KEY not set in environment")
-        _client = genai.Client(api_key=api_key)
+        with _client_lock:
+            if _client is None:
+                api_key = os.getenv("GEMINI_API_KEY")
+                if not api_key:
+                    raise RuntimeError("GEMINI_API_KEY not set in environment")
+                _client = genai.Client(api_key=api_key)
     return _client
 
 
@@ -46,16 +51,16 @@ def _get_seed_context(seed_id: str | None, restaurant: Restaurant) -> tuple[str 
     return item["menu_item_name"], item["category"]
 
 
-def generate_meal_summary(user: User, meals: list[dict], restaurant: Restaurant, seed_id: str | None = None) -> str:
-    if not meals:
-        return ""
-
+def _generate_single_summary(
+    meal: dict,
+    restaurant: Restaurant,
+    user: User,
+    index_to_name: dict[int, str],
+    seed_id: str | None = None,
+) -> str:
     try:
-        index_to_name = _build_index_map(restaurant)
         c = user.constraints
-
-        top = meals[0]
-        by_cat = _resolve_by_category(top, index_to_name)
+        by_cat = _resolve_by_category(meal, index_to_name)
 
         category_lines = "\n".join(
             f"  {label}: {', '.join(names)}" for label, names in by_cat.items()
@@ -64,12 +69,9 @@ def generate_meal_summary(user: User, meals: list[dict], restaurant: Restaurant,
         lines = [
             f"Restaurant: {restaurant.name}",
             f"User targets: {c.calories} cal, {c.protein}g protein, ${c.price:.2f} budget",
-            f"Top meal breakdown:\n{category_lines}",
-            f"Total: {top['total_cal']} cal · {top['total_protein']}g protein · ${top['total_price']:.2f}",
+            f"Meal breakdown:\n{category_lines}",
+            f"Total: {meal['total_cal']} cal · {meal['total_protein']}g protein · ${meal['total_price']:.2f}",
         ]
-        num_alt_rounds = min(2, (len(meals) - 1) // 3)
-        if num_alt_rounds > 0:
-            lines.append(f"Alternative meal sets available: {num_alt_rounds} (user can tap 'Alternative Meals' to see them)")
 
         seed_name, seed_category = _get_seed_context(seed_id, restaurant)
 
@@ -80,10 +82,17 @@ def generate_meal_summary(user: User, meals: list[dict], restaurant: Restaurant,
                 "Highlight how it fits their targets."
             )
         elif seed_category == "Entree":
-            framing = (
-                f"The user chose the {seed_name} (entree). The AI added the sides and drinks. "
-                "Frame it as 'we paired your [entree] with [side/drink]' to make clear the AI chose the additions."
-            )
+            extra_entrees = [n for n in by_cat.get("Entree", []) if n != seed_name]
+            if extra_entrees:
+                framing = (
+                    f"The user chose the {seed_name} (entree). The AI added {', '.join(extra_entrees)} plus sides/drinks to complete the meal. "
+                    f"Mention all items naturally — don't omit the extra entree(s)."
+                )
+            else:
+                framing = (
+                    f"The user chose the {seed_name} (entree). The AI added the sides and drinks. "
+                    "Frame it as 'we paired your [entree] with [side/drink]' to make clear the AI chose the additions."
+                )
         else:
             framing = (
                 f"The user chose the {seed_name} ({seed_category.lower()}). The AI filled in the rest of the meal. "
@@ -91,13 +100,15 @@ def generate_meal_summary(user: User, meals: list[dict], restaurant: Restaurant,
             )
 
         prompt = (
-            "You are a friendly meal assistant for EatAI. "
-            f"{framing} "
-            "Write a short 2-3 sentence response. "
-            "Mention how the totals compare to the user's targets. "
-            "If alternatives are available, end with one brief sentence about them. "
-            "Plain text only — no markdown, no bullet points.\n\n"
-            + "\n".join(lines)
+            "You are EatAI, a casual and helpful meal assistant. "
+            "Keep your response to 2-3 sentences max. Plain text only — no markdown, no lists.\n\n"
+            f"{framing}\n\n"
+            "Meal data:\n" + "\n".join(lines) + "\n\n"
+            "Guidelines:\n"
+            "- Vary your sentence structure and word choice — never use the same opener twice.\n"
+            "- Lead with the meal itself in natural language, not a formula.\n"
+            "- Weave in 1-2 nutrition/price highlights only if they're interesting (e.g. notably over/under target, great protein deal).\n"
+            "- Sound like a knowledgeable friend, not a report."
         )
 
         client = _get_client()
@@ -110,3 +121,30 @@ def generate_meal_summary(user: User, meals: list[dict], restaurant: Restaurant,
     except Exception as e:
         print(f"LLM summary error: {e}")
         return ""
+
+
+def generate_meal_summaries(
+    user: User,
+    meals: list[dict],
+    restaurant: Restaurant,
+    seed_id: str | None = None,
+) -> list[str]:
+    if not meals:
+        return []
+
+    index_to_name = _build_index_map(restaurant)
+    summaries = [""] * len(meals)
+
+    with ThreadPoolExecutor(max_workers=min(len(meals), 9)) as executor:
+        future_to_idx = {
+            executor.submit(_generate_single_summary, meal, restaurant, user, index_to_name, seed_id): i
+            for i, meal in enumerate(meals)
+        }
+        for future in as_completed(future_to_idx):
+            i = future_to_idx[future]
+            try:
+                summaries[i] = future.result()
+            except Exception as e:
+                print(f"LLM summary error for meal {i}: {e}")
+
+    return summaries

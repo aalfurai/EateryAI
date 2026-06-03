@@ -132,7 +132,7 @@ export default function EatAI() {
   const [prompt, setPrompt]                 = useState("");
   const [loading, setLoading]               = useState(false);
   const [meals, setMeals]                   = useState<Meal[]>([]);
-  const [summary, setSummary]               = useState("");
+  const [summaries, setSummaries]           = useState<string[]>([]);
   const [roundIdx, setRoundIdx]             = useState(0);  // which group of 3 (0,1,2)
   const [mealIdx, setMealIdx]               = useState(0);  // which meal within the round
   const [savedKeys, setSavedKeys]           = useState<Map<string, number>>(new Map());
@@ -180,12 +180,12 @@ export default function EatAI() {
     setLoading(true);
     setHasGenerated(true);
     try {
-      const { recommendations, summary: llmSummary } = await getRecommendations(
+      const { recommendations, summaries: llmSummaries } = await getRecommendations(
         { restaurant_name: restaurantName, categories, seed_id: seed ? decodeURIComponent(seed) : undefined, calories: seedItem?.calories },
         token,
       );
       setMeals(recommendations ?? []);
-      setSummary(llmSummary ?? "");
+      setSummaries(llmSummaries ?? []);
       setTargetsDirty(false);
       setRoundIdx(0);
       setMealIdx(0);
@@ -352,13 +352,15 @@ export default function EatAI() {
                   );
                   setMealIdx(index);
                 }}
-                renderItem={({ item: meal }) => {
+                renderItem={({ item: meal, index: mealPosition }) => {
                   const mealItems = meal.items ?? [];
+                  const globalIdx = roundIdx * ROUND_SIZE + mealPosition;
+                  const mealSummary = summaries[globalIdx] || buildSummary(meal, user?.constraints);
 
                   return (
                     <View style={{ width: SCREEN_WIDTH }}>
                       <Text style={styles.summaryText}>
-                        {summary || buildSummary(meal, user?.constraints)}
+                        {mealSummary}
                       </Text>
 
                       {/* Heart / save button */}

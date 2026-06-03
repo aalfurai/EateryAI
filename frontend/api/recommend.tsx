@@ -12,7 +12,7 @@ type RecommendRequest = {
 type RecommendResponse = {
   user: unknown;
   recommendations: Meal[];
-  summary?: string;
+  summaries?: string[];
 };
 
 export const getRecommendations = (req: RecommendRequest, token: string) =>
