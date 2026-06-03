@@ -44,8 +44,8 @@ function SavedMealCard({ meal, index, isPending, onToggle }: CardProps) {
       )}
 
       <View style={styles.itemList}>
-        {(meal.items ?? []).map((item) => (
-          <View key={item.item_id} style={styles.itemRow}>
+        {(meal.items ?? []).map((item, idx) => (
+          <View key={`${item.item_id}-${idx}`} style={styles.itemRow}>
             <View style={[styles.dot, { backgroundColor: CATEGORY_COLORS[item.category] ?? "#555" }]} />
             <Text style={styles.itemName} numberOfLines={1}>{item.menu_item_name}</Text>
             <Text style={styles.itemCal}>{item.calories} cal</Text>
@@ -147,7 +147,7 @@ export default function Profile() {
         ) : (
           savedMeals.map((meal, i) => (
             <SavedMealCard
-              key={getMealKey(meal) || i}
+              key={`${getMealKey(meal)}-${i}`}
               meal={meal}
               index={i}
               isPending={pendingKeys.has(getMealKey(meal))}
