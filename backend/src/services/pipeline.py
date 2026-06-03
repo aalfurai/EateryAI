@@ -32,7 +32,8 @@ class PipelineService:
                 build_full=seed_item is not None)
             
             ranked = solver.score_and_rank_meals(user, meals)
-            return ranked[:9]
+            recommendations = ranked[1:10] if ranked and len(ranked[0]["item_ids"]) == 1 else ranked[:9]
+            return recommendations
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Pipeline error: {str(e)}")
         
