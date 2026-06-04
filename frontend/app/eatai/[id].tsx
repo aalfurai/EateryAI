@@ -31,13 +31,13 @@ type Pill = {
 
 const WELCOME_PILLS: Pill[] = [
   { id: "full",    label: "Build full meal", icon: "restaurant-outline", color: "#39ff14", bg: "rgba(57,255,20,0.12)"  },
-  { id: "protein", label: "Add Protein",     icon: "barbell-outline",    color: "#ffd600", bg: "rgba(255,214,0,0.12)" },
+  /*{ id: "protein", label: "Add Protein",     icon: "barbell-outline",    color: "#ffd600", bg: "rgba(255,214,0,0.12)" },*/
   { id: "side",    label: "Add Side",        icon: "nutrition-outline",  color: "#ffd600", bg: "rgba(255,214,0,0.12)" },
 ];
 
 const WELCOME_WITH_SIDE_PILLS: Pill[] = [
   { id: "full",    label: "Build full meal", icon: "restaurant-outline", color: "#39ff14", bg: "rgba(57,255,20,0.12)"  },
-  { id: "protein", label: "Add Protein",     icon: "barbell-outline",    color: "#ffd600", bg: "rgba(255,214,0,0.12)" },
+  /*{ id: "protein", label: "Add Protein",     icon: "barbell-outline",    color: "#ffd600", bg: "rgba(255,214,0,0.12)" },*/
 ];
 
 const REGENERATE_PILLS: Pill[] = [
@@ -47,7 +47,7 @@ const REGENERATE_PILLS: Pill[] = [
 const FOLLOW_UP_PILLS: Pill[] = [
   { id: "alt",       label: "Alternative Meals",     icon: "swap-horizontal-outline", color: "#00eaff", bg: "rgba(0,234,255,0.12)"  },
   { id: "nutrition", label: "Nutritional Breakdown", icon: "bar-chart-outline",       color: "#00eaff", bg: "rgba(0,234,255,0.12)"  },
-  { id: "protein",   label: "Add Protein",           icon: "barbell-outline",         color: "#ffd600", bg: "rgba(255,214,0,0.12)"  },
+  /*{ id: "protein",   label: "Add Protein",           icon: "barbell-outline",         color: "#ffd600", bg: "rgba(255,214,0,0.12)"  },*/
 ];
 
 const PILL_CATEGORIES: Record<string, string[]> = {
