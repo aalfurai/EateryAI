@@ -30,6 +30,9 @@ DB_PORT=
 
 # JWT Secret
 SECRET_KEY=
+
+# LLM Key
+GEMINI_API_KEY=
 ```
 
 ### Frontend (`frontend/.env`)
