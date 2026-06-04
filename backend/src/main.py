@@ -5,7 +5,7 @@ from schemas.user import User
 from schemas.requests import RecommendRequest, ConstraintsRequest, WeightsRequest, SaveMealRequest, LoginRequest, RegisterRequest, ResetWeightsRequest
 from config.security import create_token, decode_token
 from config.dependencies import pipeline, security, data_service
-from services.llm import generate_meal_summary
+from services.llm import generate_meal_summaries
 import config.db as db
 from config.db import init_pool, get_db
 from helpers import queries
@@ -276,7 +276,6 @@ def recommend(req: RecommendRequest, credentials=Depends(security), conn=Depends
     user = data_service.load_user(user_id)
     recommendations = pipeline.recommend(conn, user, req.restaurant_name, req.seed_id, req.calories, req.categories)
     restaurant = data_service.load_restaurant(conn, req.restaurant_name)
-    summary = generate_meal_summary(user, recommendations, restaurant, seed_id=req.seed_id)
 
     index_to_item = {
         item["index"]: {
@@ -295,7 +294,9 @@ def recommend(req: RecommendRequest, credentials=Depends(security), conn=Depends
         meal["items"] = [index_to_item[idx] for idx in meal.get("item_ids", []) if idx in index_to_item]
         meal["restaurant_name"] = req.restaurant_name
 
-    return {"user": user.to_dict(), "recommendations": recommendations, "summary": summary}
+    summaries = generate_meal_summaries(user, recommendations, restaurant, seed_id=req.seed_id)
+
+    return {"user": user.to_dict(), "recommendations": recommendations, "summaries": summaries}
 
 # TODO: reimplement to recommend seed items only
 # @app.post("/recommend/for-you", tags=["Recommend"])
